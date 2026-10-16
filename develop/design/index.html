@@ -1433,6 +1433,11 @@
 <td>2026-10-12</td>
 <td>#878: <code>write_doc_content</code>/<code>update_doc_from_file</code> copy a non-empty doc with <code>files.copy</code> before the clear, delete it on success and name it as <code>backupId</code> on failure; the planned pre-clear revision ID was measured to 404 right after the clear</td>
 </tr>
+<tr>
+<td><a href="image-share-lifecycle/">One Temporary-Image-Share Lifecycle</a></td>
+<td>2026-10-13</td>
+<td>#909: <code>images.ImageShareLifecycle</code> shared by <code>_apply_doc_content</code> and <code>insert_local_images</code> (shielded gather, pre-edit and post-revoke checkpoints, shielded revoke and log), <code>after_abandoned_calls</code> re-invalidating the doc cache once an abandoned edit lands, <code>created_in</code> tagging so each upload's folder is marked dirty</td>
+</tr>
 </tbody>
 </table>
 
