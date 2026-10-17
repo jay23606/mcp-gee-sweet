@@ -1455,61 +1455,19 @@
 
 
 <h1 id="mcp-gee-sweet">mcp-gee-sweet<a class="headerlink" href="#mcp-gee-sweet" title="Permanent link">&para;</a></h1>
-<p>An MCP server that gives AI clients reliable, direct access to Google Workspace — Sheets, Drive, Docs, and Calendar.</p>
+<p>An MCP server that gives AI clients reliable, direct access to Google Workspace — Sheets, Drive, Docs, Calendar, and Gmail.</p>
 <h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Read and write Google Sheets</strong> — cell values, formulas, sheet structure, batch updates</li>
 <li><strong>Manage Google Drive</strong> — list, search, upload, download, move, copy, and sync files and folders</li>
 <li><strong>Work with Google Docs</strong> — create documents, read content, write formatted content from HTML</li>
 <li><strong>Access Google Calendar</strong> — list calendars and events, create and update events, find free slots</li>
+<li><strong>Use Gmail</strong> — search and read messages and threads, send and reply, manage drafts and labels (OAuth only)</li>
 </ul>
 <h2 id="why-it-exists">Why it exists<a class="headerlink" href="#why-it-exists" title="Permanent link">&para;</a></h2>
-<p>This project started as a fork of <a href="https://github.com/xing5/mcp-google-sheets">xing5/mcp-google-sheets</a> and has since diverged substantially — full Sheets read/write/formulas/structure/formatting/charts plus a raw <code>batch_update</code> passthrough for anything a named tool doesn't cover, an AST-based Docs pipeline (HTML and Markdown input, theming, structural table editing), Drive file/sharing/sync operations, and Calendar. See <a href="decisions/decision-fork/">Project Fork</a> for the original fork history.</p>
-<p>The MCP landscape for Google Workspace has grown since then — Google now runs an official Developer Preview program, and several community projects cover similar ground. Rather than claim to be the only option, here's how the coverage actually breaks down as of mid-2026 (full sourcing in <a href="decisions/decision-repositioning/">Repositioning</a>):</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>mcp-gee-sweet</th>
-<th>Official Google Workspace MCP (Developer Preview)</th>
-<th>Notable community alternatives</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Sheets</td>
-<td>35 tools — read/write, formulas, structure, formatting, charts, raw <code>batch_update</code> passthrough</td>
-<td>6 tools (Developer Preview)</td>
-<td><a href="https://github.com/taylorwilsdon/google_workspace_mcp">taylorwilsdon/google_workspace_mcp</a> (12), <a href="https://github.com/a-bonus/google-docs-mcp">a-bonus/google-docs-mcp</a> (~44, incl. comments/conditional formatting/protected ranges we don't have yet)</td>
-</tr>
-<tr>
-<td>Docs</td>
-<td>34 tools — HTML + Markdown input, Markdown export, AST-based theming (<code>apply_theme</code>, named styles), structural table editing</td>
-<td>2 tools (Developer Preview)</td>
-<td>taylorwilsdon (18), <a href="https://github.com/piotr-agier/google-drive-mcp">piotr-agier/google-drive-mcp</a> (~17, incl. footnotes/multi-tab we don't have)</td>
-</tr>
-<tr>
-<td>Drive</td>
-<td>38 tools</td>
-<td>8 tools</td>
-<td>Several — piotr-agier and others cover a similar range</td>
-</tr>
-<tr>
-<td>Calendar</td>
-<td>17 tools</td>
-<td>9 tools</td>
-<td>Several</td>
-</tr>
-<tr>
-<td>Release channel</td>
-<td>Stable PyPI releases behind a QA regression gate</td>
-<td>Developer Preview</td>
-<td>Varies by project</td>
-</tr>
-</tbody>
-</table>
-<p>This project deliberately keeps its named-tool surface smaller than some alternatives — a-bonus/google-docs-mcp, for example, registers more raw tools by giving nearly every Sheets/Docs operation its own dedicated tool. Here, related operations consolidate into fewer, more parameterized tools, with <code>batch_update</code> as the escape hatch for whatever doesn't fit a named tool — see <a href="design/">Design Principles</a> for the reasoning ("tool count is a cost"). Neither approach is strictly better; it's a different tradeoff, and it's why raw tool counts alone don't tell the whole story in the table above.</p>
-<p>Known gaps found while researching this comparison (comments, conditional formatting, protected ranges, multi-tab Docs, and more) are tracked as candidates in the <a href="roadmap/">roadmap</a>, not silently ignored.</p>
+<p>This project started as a fork of <a href="https://github.com/xing5/mcp-google-sheets">xing5/mcp-google-sheets</a> and has since diverged substantially — full Sheets read/write/formulas/structure/formatting/charts plus a raw <code>batch_update</code> passthrough for anything a named tool doesn't cover, an AST-based Docs pipeline (HTML and Markdown input, theming, structural table editing), Drive file/sharing/sync operations, Calendar, and Gmail. See <a href="decisions/decision-fork/">Project Fork</a> for the original fork history.</p>
+<p>This project deliberately consolidates related operations into fewer, more parameterized tools, with <code>batch_update</code> as the escape hatch for whatever doesn't fit a named tool — see <a href="design/">Design Principles</a> for the reasoning ("tool count is a cost").</p>
+<p>Known gaps (full comments CRUD, conditional formatting, protected ranges, multi-tab Docs, and more) are tracked as candidates in the <a href="roadmap/">roadmap</a>, not silently ignored.</p>
 <h2 id="key-design-decisions">Key design decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>
 <p><strong>Tool count is a cost.</strong> Every registered tool is a name the AI must reason about on every call. This server applies a strict inclusion test — see <a href="design/">Design Principles</a> — and defers borderline cases to the <code>batch_update</code> passthrough rather than adding named tools speculatively.</p>
 <p><strong>Composite tools only when it matters.</strong> Multi-step workflows are left to the AI client unless they involve binary data, pagination loops, or encoding decisions that Claude handles inconsistently in practice. See <a href="design/#when-to-build-a-composite">Design Principles</a> for the policy.</p>
