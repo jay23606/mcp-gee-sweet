@@ -1455,18 +1455,18 @@
 
 
 <h1 id="mcp-gee-sweet">mcp-gee-sweet<a class="headerlink" href="#mcp-gee-sweet" title="Permanent link">&para;</a></h1>
-<p>An MCP server that gives AI clients reliable, direct access to Google Workspace — Sheets, Drive, Docs, Calendar, and Gmail.</p>
+<p>An MCP server that gives AI clients deep, direct access to Google Workspace — Sheets, Drive, Docs, Calendar, and Gmail.</p>
 <h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Read and write Google Sheets</strong> — cell values, formulas, sheet structure, batch updates</li>
 <li><strong>Manage Google Drive</strong> — list, search, upload, download, move, copy, and sync files and folders</li>
-<li><strong>Work with Google Docs</strong> — create documents, read content, write formatted content from HTML</li>
+<li><strong>Work with Google Docs</strong> — create documents, read content, write formatted content from HTML or Markdown</li>
 <li><strong>Access Google Calendar</strong> — list calendars and events, create and update events, find free slots</li>
 <li><strong>Use Gmail</strong> — search and read messages and threads, send and reply, manage drafts and labels (OAuth only)</li>
 </ul>
 <h2 id="why-it-exists">Why it exists<a class="headerlink" href="#why-it-exists" title="Permanent link">&para;</a></h2>
 <p>This project started as a fork of <a href="https://github.com/xing5/mcp-google-sheets">xing5/mcp-google-sheets</a> and has since diverged substantially — full Sheets read/write/formulas/structure/formatting/charts plus a raw <code>batch_update</code> passthrough for anything a named tool doesn't cover, an AST-based Docs pipeline (HTML and Markdown input, theming, structural table editing), Drive file/sharing/sync operations, Calendar, and Gmail. See <a href="decisions/decision-fork/">Project Fork</a> for the original fork history.</p>
-<p>This project deliberately consolidates related operations into fewer, more parameterized tools, with <code>batch_update</code> as the escape hatch for whatever doesn't fit a named tool — see <a href="design/">Design Principles</a> for the reasoning ("tool count is a cost").</p>
+<p>This project deliberately consolidates related operations into fewer, more parameterized tools, with <code>batch_update</code> as the escape hatch for whatever doesn't fit a named tool — see <a href="design/#tool-count-as-a-cost">Design Principles</a> for the reasoning ("Tool count as a cost").</p>
 <p>Known gaps (full comments CRUD, conditional formatting, protected ranges, multi-tab Docs, and more) are tracked as candidates in the <a href="roadmap/">roadmap</a>, not silently ignored.</p>
 <h2 id="key-design-decisions">Key design decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>
 <p><strong>Tool count is a cost.</strong> Every registered tool is a name the AI must reason about on every call. This server applies a strict inclusion test — see <a href="design/">Design Principles</a> — and defers borderline cases to the <code>batch_update</code> passthrough rather than adding named tools speculatively.</p>
