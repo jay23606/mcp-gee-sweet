@@ -5643,7 +5643,7 @@ Run it on a server whose account can own a copy of `{DOC_ID}`: OAuth, or a servi
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    drive_folder_cache=MagicMock(), folder_id=None)
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>with patch.object(c, &#39;fill_tables&#39;, side_effect=RuntimeError(&#39;injected failure&#39;)):
 <a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    print(asyncio.run(c._replace_doc_content(lc, &#39;{DOC_ID}&#39;, &#39;&lt;p&gt;TC-DOC219 failed write&lt;/p&gt;&#39;, &#39;html&#39;,
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>        autolink_urls=True, revoke_sharing=True, auto_downscale=False)))
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>        autolink_urls=True, revoke_sharing=True, auto_downscale=False, allow_no_backup=False)))
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>&quot;
 </code></pre></div>
 5. `get_doc_content(file_id={BACKUP_ID})`, where `{BACKUP_ID}` is step 4's `backupId`. Part B's mock `doc_cache` leaves the server's cache stale, so call `refresh_cache(doc_id={DOC_ID})` before reading `{DOC_ID}` again.
@@ -5672,7 +5672,7 @@ Run it on a server whose account can own a copy of `{DOC_ID}`: OAuth, or a servi
 <a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>    return result
 <a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>with patch.object(c, &#39;execute_in_thread&#39;, after_commit):
 <a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>    print(asyncio.run(c._replace_doc_content(lc, &#39;{DOC_ID}&#39;, &#39;&lt;p&gt;TC-DOC219 part C&lt;/p&gt;&#39;, &#39;html&#39;,
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>        autolink_urls=True, revoke_sharing=True, auto_downscale=False)))
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>        autolink_urls=True, revoke_sharing=True, auto_downscale=False, allow_no_backup=False)))
 <a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>&quot;
 </code></pre></div>
 
@@ -5716,7 +5716,7 @@ Run it on a server whose account can own a copy of `{DOC_ID}`: OAuth, or a servi
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    b = odocs.documents().get(documentId=d).execute()[&#39;body&#39;][&#39;content&#39;]
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    return &#39;&#39;.join(r.get(&#39;textRun&#39;, {}).get(&#39;content&#39;, &#39;&#39;) for e in b for r in e.get(&#39;paragraph&#39;, {}).get(&#39;elements&#39;, [])).strip()
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>def run(d, html):
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    return asyncio.run(c._replace_doc_content(lc, d, html, &#39;html&#39;, autolink_urls=True, revoke_sharing=True, auto_downscale=False))
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    return asyncio.run(c._replace_doc_content(lc, d, html, &#39;html&#39;, autolink_urls=True, revoke_sharing=True, auto_downscale=False, allow_no_backup=False))
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>folder = od.files().create(body={&#39;name&#39;: &#39;TC-DOC224 folder&#39;, &#39;mimeType&#39;: &#39;application/vnd.google-apps.folder&#39;}, fields=&#39;id&#39;).execute()[&#39;id&#39;]
 <a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>try:
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    doc = od.files().create(body={&#39;name&#39;: &#39;TC-DOC224 doc&#39;, &#39;mimeType&#39;: &#39;application/vnd.google-apps.document&#39;, &#39;parents&#39;: [folder]}, fields=&#39;id&#39;).execute()[&#39;id&#39;]
@@ -5818,6 +5818,108 @@ Run it on a server whose account can own a copy of `{DOC_ID}`: OAuth, or a servi
 **Cleanup:** unlock `{DOC_ID}` with the same script, using `body={'contentRestrictions': [{'readOnly': False}]}`. Trash both steps' `resized_file_id`, `{OVERSIZED_FILE_ID}`, `{ORIG_FOLDER_ID}`, `{PIXEL_FILE_ID}`, and `{DOC_ID}`. `rm /tmp/qa-oversized-909.png`
 
 **Result (2026-10-14) ✅ PASS — Kit, PR #1029 round 1 (`089f6ee`).** Ran in a scratch folder on the QA Shared Drive; the oversized PNG went under this job's scratch dir instead of `/tmp`, and `{DEFAULT_FOLDER_ID}` is the Shared Drive root (`DRIVE_FOLDER_ID`). Step 1's listing showed only `qa-oversized-909.png`; step 2's second listing added `qa-oversized-909.png (resized)` with ID `resized_file_id`. Step 3's listing was empty; step 4's second listing showed `{PIXEL_FILE_ID}` (`qa-fixture-pixel.png`). No `refresh_cache` anywhere. Step 5 returned the 403 "The caller does not have permission" error plus a new `resized_file_id`, different from step 2's. Cleanup done.
+
+### TC-DOC225: A writer whose sharing settings block copying is refused by default, and replaces without a backup with `allow_no_backup=True` (#1035) ⚠️ destructive ⚠️ requires-oauth
+When `downloadRestrictions.itemDownloadRestriction.restrictedForWriters` is set on a doc, a writer's backup copy gets 403 `cannotCopyFile` (measured live, 2026-10-14). Unlike #1018's reasons (TC-DOC224), this one refuses by default and replaces without a backup only when the caller passes `allow_no_backup=True` (`docs/design/doc-replace-backup.md`, "The copy fails"). The same writer also gets 403 `cannotExportFile` on an export, so no other kind of backup is possible either. Same two-identity setup as TC-DOC224: the OAuth account owns the fixture, and the service account is the caller. The script runs from the checkout under test with no MCP server involved, so it needs both `token.json` and service-account credentials in `src/mcp_gee_sweet/.env`. Here the service account is a writer on both the folder and the doc, so the folder permission isn't what stops the copy.
+
+**Setup:** none. The script creates and deletes its own fixture.
+
+**Steps**
+1. Run from the checkout under test:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>uv run python -I -c &quot;
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>import asyncio, json, time, mcp_gee_sweet
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>from types import SimpleNamespace
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>from unittest.mock import MagicMock
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>from googleapiclient.discovery import build
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>from mcp_gee_sweet import auth
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>from mcp_gee_sweet.tools.docs import content as c
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>oauth, sa = auth._oauth_creds(), auth._service_account_creds()
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>od, odocs = build(&#39;drive&#39;, &#39;v3&#39;, credentials=oauth), build(&#39;docs&#39;, &#39;v1&#39;, credentials=oauth)
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>lc = SimpleNamespace(docs_service=build(&#39;docs&#39;, &#39;v1&#39;, credentials=sa),
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    drive_service=build(&#39;drive&#39;, &#39;v3&#39;, credentials=sa), doc_cache=MagicMock(),
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    drive_folder_cache=MagicMock(), folder_id=None)
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>def text(d):
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    b = odocs.documents().get(documentId=d).execute()[&#39;body&#39;][&#39;content&#39;]
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>    return &#39;&#39;.join(r.get(&#39;textRun&#39;, {}).get(&#39;content&#39;, &#39;&#39;) for e in b for r in e.get(&#39;paragraph&#39;, {}).get(&#39;elements&#39;, [])).strip()
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>def run(d, html, allow):
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>    return asyncio.run(c._replace_doc_content(lc, d, html, &#39;html&#39;, autolink_urls=True, revoke_sharing=True, auto_downscale=False, allow_no_backup=allow))
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>folder = od.files().create(body={&#39;name&#39;: &#39;TC-DOC225 folder&#39;, &#39;mimeType&#39;: &#39;application/vnd.google-apps.folder&#39;}, fields=&#39;id&#39;).execute()[&#39;id&#39;]
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>try:
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    doc = od.files().create(body={&#39;name&#39;: &#39;TC-DOC225 doc&#39;, &#39;mimeType&#39;: &#39;application/vnd.google-apps.document&#39;, &#39;parents&#39;: [folder]}, fields=&#39;id&#39;).execute()[&#39;id&#39;]
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    odocs.documents().batchUpdate(documentId=doc, body={&#39;requests&#39;: [{&#39;insertText&#39;: {&#39;location&#39;: {&#39;index&#39;: 1}, &#39;text&#39;: &#39;TC-DOC225 before\n&#39;}}]}).execute()
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>    for fid in (folder, doc):
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>        od.permissions().create(fileId=fid, body={&#39;type&#39;: &#39;user&#39;, &#39;role&#39;: &#39;writer&#39;, &#39;emailAddress&#39;: sa.service_account_email}, sendNotificationEmail=False).execute()
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>    od.files().update(fileId=doc, body={&#39;downloadRestrictions&#39;: {&#39;itemDownloadRestriction&#39;: {&#39;restrictedForWriters&#39;: True}}}).execute()
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>    time.sleep(5)
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>    print(&#39;A&#39;, json.dumps({k: v for k, v in run(doc, &#39;&lt;p&gt;TC-DOC225 refused&lt;/p&gt;&#39;, False).items() if k != &#39;docId&#39;}), repr(text(doc)))
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a>    print(&#39;B&#39;, json.dumps({k: v for k, v in run(doc, &#39;&lt;p&gt;TC-DOC225 after&lt;/p&gt;&#39;, True).items() if k != &#39;docId&#39;}), repr(text(doc)))
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a>    print(&#39;C&#39;, [f[&#39;name&#39;] for f in od.files().list(q=f\&quot;&#39;{folder}&#39; in parents and trashed=false\&quot;, fields=&#39;files(name)&#39;).execute()[&#39;files&#39;]])
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>finally:
+<a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a>    od.files().delete(fileId=folder).execute()
+<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a>    print(&#39;cleanup done&#39;)
+<a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>&quot;
+</code></pre></div>
+
+**Checks**
+- Line `A`'s `error` is "Couldn't back up the document before replacing its content (the document's sharing settings don't allow this account to copy it), so it was left unchanged. To replace it without a backup, retry with allow_no_backup=True. Its previous content then can't be recovered with export_revision: Docs merges the revision from before the replace into the replace's own.", with no `backupId`. Its doc text is still `'TC-DOC225 before'`
+- Line `B` has `web_link` and `warning` "The document's previous content was replaced without a backup copy (the document's sharing settings don't allow this account to copy it).", with no `error` or `backupId`. Its doc text is `'TC-DOC225 after'`
+- Line `C` lists only `TC-DOC225 doc`: no `(backup before replace)` copy was made
+- The log shows googleapiclient's `403 … "cannotCopyFile"` before each of `A` and `B`, and `Replacing doc … without a backup: the document's sharing settings don't allow this account to copy it` before `B` only
+- `cleanup done` is printed
+
+**Cleanup:** the script deletes the folder, and the doc with it. If it stopped before `cleanup done`, `search_files(query="TC-DOC225")` on the OAuth server and delete what it finds.
+
+**Result (2026-10-16) ✅ PASS — Sky, PR #1042 round 1 (`4ba422c`).** Ran the script as written from this worktree. Line `A` returned the expected refusal with no `backupId`, and the doc text stayed `'TC-DOC225 before'`. Line `B` returned `web_link` and the expected `warning` with no `error` or `backupId`, and the doc text became `'TC-DOC225 after'`. Line `C` listed only `TC-DOC225 doc`. The log showed `403 … "cannotCopyFile"` before `A` and before `B`, and `Replacing doc … without a backup: the document's owner doesn't allow this account to copy it` before `B` only. `cleanup done` was printed. The case passes, but two extra probes in the same round found the refusal text wrong for callers this case doesn't cover. (1) A *reader* on a doc with `copyRequiresWriterPermission` also gets 403 `cannotCopyFile` (`capabilities.canCopy`/`canEdit` both false). It is told to retry with `allow_no_backup=True`, and that retry logs "Replacing … without a backup" and then fails at the clear with 403. (2) A writer on a Shared Drive doc with `restrictedForWriters` (the file has no `owners`) gets the same "the document's owner" wording. Both were sent back on the PR.
+
+**Result (2026-10-16) ✅ PASS — Sky, PR #1042 round 2 (`9323a1b`).** Ran the script as written from this worktree. Lines `A`, `B`, and `C` matched every check with the new "the document's sharing settings don't allow this account to copy it" wording, and so did the log lines. `cleanup done` was printed. The round-1 Shared Drive probe, re-run in the QA Shared Drive (service account as Content manager, `restrictedForWriters` set, `canEdit: true`), now gets the same sharing-settings refusal without naming an owner.
+
+### TC-DOC226: A reader blocked from copying is told it can't edit the doc, with or without `allow_no_backup` (#1035) ⚠️ destructive ⚠️ requires-oauth
+With `copyRequiresWriterPermission` set, a caller with only reader access also gets 403 `cannotCopyFile` on the backup copy. `allow_no_backup=True` can't help it, since the clear would fail, so after that copy failure the doc's `capabilities.canEdit` is read. When it's false, the call refuses with an error saying the account can't edit the doc, whatever the flag says (`docs/design/doc-replace-backup.md`, "The copy fails"; PR #1042 QA round 1). Before the fix, the default call said to retry with `allow_no_backup=True`, and that retry logged `Replacing doc … without a backup` and then failed at the clear with a 403. Same two-identity setup as TC-DOC225: the OAuth account owns the fixture, and the service account is the caller, here with reader access on the doc only.
+
+**Setup:** none. The script creates and deletes its own fixture.
+
+**Steps**
+1. Run from the checkout under test:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>uv run python -I -c &quot;
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>import asyncio, json, time, mcp_gee_sweet
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>from types import SimpleNamespace
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>from unittest.mock import MagicMock
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>from googleapiclient.discovery import build
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>from mcp_gee_sweet import auth
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>from mcp_gee_sweet.tools.docs import content as c
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>oauth, sa = auth._oauth_creds(), auth._service_account_creds()
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>od, odocs = build(&#39;drive&#39;, &#39;v3&#39;, credentials=oauth), build(&#39;docs&#39;, &#39;v1&#39;, credentials=oauth)
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>lc = SimpleNamespace(docs_service=build(&#39;docs&#39;, &#39;v1&#39;, credentials=sa),
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    drive_service=build(&#39;drive&#39;, &#39;v3&#39;, credentials=sa), doc_cache=MagicMock(),
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>    drive_folder_cache=MagicMock(), folder_id=None)
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>def text(d):
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    b = odocs.documents().get(documentId=d).execute()[&#39;body&#39;][&#39;content&#39;]
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>    return &#39;&#39;.join(r.get(&#39;textRun&#39;, {}).get(&#39;content&#39;, &#39;&#39;) for e in b for r in e.get(&#39;paragraph&#39;, {}).get(&#39;elements&#39;, [])).strip()
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>def run(d, html, allow):
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>    return asyncio.run(c._replace_doc_content(lc, d, html, &#39;html&#39;, autolink_urls=True, revoke_sharing=True, auto_downscale=False, allow_no_backup=allow))
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>folder = od.files().create(body={&#39;name&#39;: &#39;TC-DOC226 folder&#39;, &#39;mimeType&#39;: &#39;application/vnd.google-apps.folder&#39;}, fields=&#39;id&#39;).execute()[&#39;id&#39;]
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>try:
+<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a>    doc = od.files().create(body={&#39;name&#39;: &#39;TC-DOC226 doc&#39;, &#39;mimeType&#39;: &#39;application/vnd.google-apps.document&#39;, &#39;parents&#39;: [folder]}, fields=&#39;id&#39;).execute()[&#39;id&#39;]
+<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>    odocs.documents().batchUpdate(documentId=doc, body={&#39;requests&#39;: [{&#39;insertText&#39;: {&#39;location&#39;: {&#39;index&#39;: 1}, &#39;text&#39;: &#39;TC-DOC226 before\n&#39;}}]}).execute()
+<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>    od.permissions().create(fileId=doc, body={&#39;type&#39;: &#39;user&#39;, &#39;role&#39;: &#39;reader&#39;, &#39;emailAddress&#39;: sa.service_account_email}, sendNotificationEmail=False).execute()
+<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a>    od.files().update(fileId=doc, body={&#39;copyRequiresWriterPermission&#39;: True}).execute()
+<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a>    time.sleep(5)
+<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a>    print(&#39;A&#39;, json.dumps({k: v for k, v in run(doc, &#39;&lt;p&gt;TC-DOC226 default&lt;/p&gt;&#39;, False).items() if k != &#39;docId&#39;}), repr(text(doc)))
+<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a>    print(&#39;B&#39;, json.dumps({k: v for k, v in run(doc, &#39;&lt;p&gt;TC-DOC226 flag&lt;/p&gt;&#39;, True).items() if k != &#39;docId&#39;}), repr(text(doc)))
+<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a>finally:
+<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a>    od.files().delete(fileId=folder).execute()
+<a id="__codelineno-15-29" name="__codelineno-15-29" href="#__codelineno-15-29"></a>    print(&#39;cleanup done&#39;)
+<a id="__codelineno-15-30" name="__codelineno-15-30" href="#__codelineno-15-30"></a>&quot;
+</code></pre></div>
+
+**Checks**
+- Lines `A` and `B` each have exactly one key, `error`: "This account can't edit the document, so it was left unchanged (Drive also refused the backup copy: the document's sharing settings don't allow this account to copy it)." Neither mentions `allow_no_backup`. Each line's doc text is still `'TC-DOC226 before'`
+- The log shows googleapiclient's `403 … "cannotCopyFile"` before each of `A` and `B`, and no `Replacing doc … without a backup` line anywhere
+- `cleanup done` is printed
+
+**Cleanup:** the script deletes the folder, and the doc with it. If it stopped before `cleanup done`, `search_files(query="TC-DOC226")` on the OAuth server and delete what it finds.
+
+**Result (2026-10-16) ✅ PASS — Sky, PR #1042 round 2 (`9323a1b`).** Ran the script as written from this worktree. Lines `A` and `B` each had only `error`, with the expected "This account can't edit the document …" text and no mention of `allow_no_backup`. The doc text stayed `'TC-DOC226 before'` after both. The log showed `403 … "cannotCopyFile"` before each line and no `Replacing doc … without a backup` line. `cleanup done` was printed.
 
 
 

@@ -1446,7 +1446,32 @@ images, and tables survive, which a re-inserted snapshot wouldn't.</p>
   caller still learns the old content is gone (PR #1034 QA round 1). If the replace fails
   after the clear, the error says the content couldn't be backed up and why. In that case the
   original content can't be recovered, since the pre-clear revision is merged away at once
-  (table above).
+  (table above).</p>
+<p>Two more 403 reasons replace without a backup only when the caller passes
+  <code>allow_no_backup=True</code> (<code>_opt_in_no_backup_reason</code>; maintainer decision, 2026-10-15, #1035):
+  - <code>cannotCopyFile</code>. <code>downloadRestrictions.itemDownloadRestriction.restrictedForWriters</code> is
+    set, and the caller is a writer. The reason text names the doc's sharing settings, not an
+    owner: a Shared Drive doc has no <code>owners</code>, and there a manager sets the restriction (PR
+    #1042 QA round 1). Measured live on 2026-10-14, with or without <code>parents</code>. On
+    2026-10-16 the same writer also got 403 <code>cannotExportFile</code> from <code>files.export</code>, and its
+    <code>revisions.list</code> entries had no <code>exportLinks</code>. Whoever set it chose to stop writers from
+    copying the file, so the backup is never made another way (an export or a download).
+  - <code>activeItemCreationLimitExceeded</code>, the account's item-creation cap (a documented reason; it
+    can't be produced in QA).</p>
+<p>A reader gets <code>cannotCopyFile</code> too, when <code>copyRequiresWriterPermission</code> is set, and the flag
+  can't help it: the clear would fail. So for either reason the doc's <code>capabilities.canEdit</code>
+  is read after the copy fails (<code>_can_edit</code>). If it's false, the call refuses with an error
+  saying the account can't edit the doc, whatever the flag says (PR #1042 QA round 1). If it
+  can't be read, the call goes on by the flag; a non-editor's clear then gets a 4xx, which
+  still leaves the doc unchanged. The read only runs on these two reasons, so it costs
+  nothing on the normal path.</p>
+<p>Without the flag the call refuses, leaving the doc unchanged. The error names the reason
+  and the flag, and says <code>export_revision</code> can't recover the previous content afterward. That
+  was measured in the same 2026-10-16 run: after the writer's clear, the revisions were <code>1, 4</code>,
+  and the owner's export of both was empty. The flag has no effect on #1018's reasons above,
+  which replace without a backup either way, or on any other copy failure, which still refuses.
+  With the flag, the success <code>warning</code> and the after-clear failure text are the same as for
+  #1018's reasons.
 - <strong>Cancellation:</strong> the copy is created inside a shielded scope, so its ID is always recorded (the
   PR #877 rule). The scope is bounded by <code>_BACKUP_COPY_TIMEOUT</code> (60 s, all attempts together), per
   <code>CLAUDE.md</code>'s rule that a cancel waits for shielded work; a timeout is reported like a 5xx.
