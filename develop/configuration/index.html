@@ -524,6 +524,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#local-file-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local file access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caching" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1532,6 +1543,16 @@
 <td>all tools</td>
 </tr>
 <tr>
+<td><code>LOCAL_FILE_ACCESS</code></td>
+<td>Which local files tools may read and write: <code>full</code>, <code>roots</code>, or <code>off</code>. See <a href="#local-file-access">Local file access</a></td>
+<td><code>full</code> under stdio, <code>off</code> under SSE and streamable HTTP</td>
+</tr>
+<tr>
+<td><code>LOCAL_FILE_ROOTS</code></td>
+<td>With <code>LOCAL_FILE_ACCESS=roots</code>, the directories tools may use, separated by <code>:</code> (<code>;</code> on Windows), like <code>PATH</code></td>
+<td>—</td>
+</tr>
+<tr>
 <td><code>CACHE_DB_PATH</code></td>
 <td>Path to the SQLite cache database</td>
 <td><code>/tmp/mcp_gee_sweet.db</code></td>
@@ -1635,6 +1656,44 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>list_messages,get_message,list_threads,get_thread,list_labels,send_message,create_draft,send_draft,reply_to_message,modify_labels,trash_message
 </code></pre></div></p>
 <p>See <a href="../tools/">Tools</a> for the full list of tool names.</p>
+<h2 id="local-file-access">Local file access<a class="headerlink" href="#local-file-access" title="Permanent link">&para;</a></h2>
+<p>Some tools read or write files on the machine the server runs on: uploads, downloads, <code>sync_folder</code>, <code>create_doc_from_file</code>, Gmail attachments, local images in Markdown, and the <code>local_path</code> destination that large results can be written to. <code>LOCAL_FILE_ACCESS</code> decides which files they may use:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>What tools may use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>full</code></td>
+<td>Any local path the server process can open</td>
+</tr>
+<tr>
+<td><code>roots</code></td>
+<td>Only paths under a directory listed in <code>LOCAL_FILE_ROOTS</code>. Paths are resolved first, symlinks included, so a link inside a root that points outside it is refused</td>
+</tr>
+<tr>
+<td><code>off</code></td>
+<td>No local files</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Default:</strong> <code>full</code> under stdio, where the caller is the person running the server, and <code>off</code> under SSE and streamable HTTP, where it may not be. A network-facing server that should use local files needs <code>LOCAL_FILE_ACCESS</code> set explicitly.</p>
+<p><strong>Always refused, in every mode:</strong> the server's own credential, config, cache, and log files. That's <code>CREDENTIALS_PATH</code>, <code>TOKEN_PATH</code>, <code>SERVICE_ACCOUNT_PATH</code>, <code>GOOGLE_APPLICATION_CREDENTIALS</code>, gcloud's default ADC file, <code>src/mcp_gee_sweet/.env</code>, <code>CACHE_DB_PATH</code> (and its <code>-wal</code>/<code>-shm</code> files), <code>LOG_FILE</code>, and <code>ACCESS_LOG_FILE</code>. A file is matched by identity, so a hardlink or a differently cased path to one of them is refused too.</p>
+<p><strong>In <code>off</code> mode</strong> these tools aren't registered, since they can only work on local files: <code>upload_local_file</code>, <code>upload_local_folder</code>, <code>download_file</code>, <code>download_folder</code>, <code>sync_folder</code>, <code>import_csv_to_sheet</code>, <code>create_doc_from_file</code>, <code>update_doc_from_file</code>, and <code>insert_local_images</code>. Tools with an optional local path stay registered and return an error if one is used. That covers <code>local_path</code> on large-result tools, Gmail's <code>attachments[].local_path</code> (<code>content_base64</code> still works), and local image paths in <code>create_doc</code>/<code>write_doc_content</code> content, which fail per image while the doc is still written.</p>
+<p>During a folder walk (<code>upload_local_folder</code>, <code>download_folder</code>, <code>sync_folder</code>), each file and subfolder is checked, not just the top directory. A refused entry is listed under <code>failed</code>, and the rest of the walk continues.</p>
+<p><code>server://auth-status</code> reports the active policy under <code>local_file_access</code>: its <code>mode</code>, whether it was set <code>explicit</code>ly, the <code>roots</code> in <code>roots</code> mode, and the <code>unregistered_tools</code> that <code>off</code> mode left out.</p>
+<p>Docker example, with the host's <code>./data</code> directory as the only one tools may use:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-p<span class="w"> </span><span class="m">8000</span>:8000<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">/data:/data&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">LOCAL_FILE_ACCESS</span><span class="o">=</span>roots<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">LOCAL_FILE_ROOTS</span><span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">CREDENTIALS_CONFIG</span><span class="o">=</span>&lt;base64&gt;<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>mcp-gee-sweet
+</code></pre></div>
+<p>An invalid <code>LOCAL_FILE_ACCESS</code> value, <code>roots</code> mode without <code>LOCAL_FILE_ROOTS</code>, or a root that isn't an existing directory stops the server at startup, before it serves. <code>mcp-gee-sweet auth</code> still runs, so a root that isn't mounted yet doesn't block re-authorization. Design: <a href="../design/local-file-access-policy/">local-file-access-policy.md</a>.</p>
 <h2 id="caching">Caching<a class="headerlink" href="#caching" title="Permanent link">&para;</a></h2>
 <p>The server caches responses in a local SQLite database to reduce API calls and latency. Five namespaces are cached: sheet structure, sheet data, Drive folder listings, doc content, and calendar metadata.</p>
 <ul>

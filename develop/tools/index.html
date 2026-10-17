@@ -1762,7 +1762,7 @@
 </tr>
 <tr>
 <td><code>import_csv_to_sheet</code></td>
-<td>Create a new Google Spreadsheet populated from a local CSV file.</td>
+<td>Create a new Google Spreadsheet populated from a local CSV file. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>local_path</code>, <code>title</code>, <code>folder_id?</code>, <code>sheet_name?</code></td>
 </tr>
 <tr>
@@ -1912,27 +1912,27 @@
 </tr>
 <tr>
 <td><code>upload_local_file</code></td>
-<td>Upload a file from the local filesystem to a Google Drive folder. Handles binary and text files (images, PDFs, DOCX, XLSX, scripts, etc.).</td>
+<td>Upload a file from the local filesystem to a Google Drive folder. Handles binary and text files (images, PDFs, DOCX, XLSX, scripts, etc.). Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>local_path</code>, <code>parent_folder_id</code>, <code>name?</code>, <code>skip_if_exists?</code>, <code>convert?</code></td>
 </tr>
 <tr>
 <td><code>upload_local_folder</code></td>
-<td>Upload all files in a local directory (non-recursive) to a Google Drive folder.</td>
+<td>Upload all files in a local directory (non-recursive) to a Google Drive folder. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>local_path</code>, <code>parent_folder_id</code>, <code>skip_if_exists?</code>, <code>skip_system_files?</code>, <code>convert?</code></td>
 </tr>
 <tr>
 <td><code>download_file</code></td>
-<td>Download a file from Google Drive to the local filesystem.</td>
+<td>Download a file from Google Drive to the local filesystem. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>file_id</code>, <code>local_path</code>, <code>export_format?</code></td>
 </tr>
 <tr>
 <td><code>download_folder</code></td>
-<td>Download all files in a Google Drive folder (non-recursive) to a local directory.</td>
+<td>Download all files in a Google Drive folder (non-recursive) to a local directory. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>folder_id</code>, <code>local_path</code>, <code>export_format?</code>, <code>mime_type_filter?</code>, <code>skip_if_exists?</code>, <code>progress_unit?</code></td>
 </tr>
 <tr>
 <td><code>sync_folder</code></td>
-<td>Sync files between a Google Drive folder and a local directory.</td>
+<td>Sync files between a Google Drive folder and a local directory. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>folder_id</code>, <code>local_path</code>, <code>direction?</code>, <code>export_format?</code>, <code>convert_markdown?</code>, <code>use_checksum?</code>, <code>skip_system_files?</code>, <code>dry_run?</code>, <code>recursive?</code>, <code>result_local_path?</code>, <code>resolve?</code></td>
 </tr>
 </tbody>
@@ -2016,7 +2016,7 @@
 </tr>
 <tr>
 <td><code>create_doc_from_file</code></td>
-<td>Create a Google Doc from a local .md or .html file.</td>
+<td>Create a Google Doc from a local .md or .html file. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>local_path</code>, <code>title?</code>, <code>folder_id?</code>, <code>autolink_urls?</code>, <code>revoke_sharing?</code>, <code>auto_downscale?</code></td>
 </tr>
 <tr>
@@ -2031,7 +2031,7 @@
 </tr>
 <tr>
 <td><code>update_doc_from_file</code></td>
-<td>Replace an existing Google Doc's content in place from a local .md or .html file.</td>
+<td>Replace an existing Google Doc's content in place from a local .md or .html file. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>doc_id</code>, <code>local_path</code>, <code>content_format?</code>, <code>autolink_urls?</code>, <code>revoke_sharing?</code>, <code>auto_downscale?</code></td>
 </tr>
 <tr>
@@ -2071,7 +2071,7 @@
 </tr>
 <tr>
 <td><code>insert_local_images</code></td>
-<td>Upload local image files to Drive and swap each into a Google Doc at a plain-text marker, in one call.</td>
+<td>Upload local image files to Drive and swap each into a Google Doc at a plain-text marker, in one call. Not available when the server runs with LOCAL_FILE_ACCESS=off.</td>
 <td><code>doc_id</code>, <code>images</code>, <code>folder_id?</code>, <code>revoke_sharing?</code>, <code>auto_downscale?</code></td>
 </tr>
 <tr>
