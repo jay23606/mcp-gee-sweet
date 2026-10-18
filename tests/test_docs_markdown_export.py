@@ -1587,6 +1587,30 @@ class TestSoftBreakCommonMark:
         assert rendered == f"a<br>[link]({url})<br>b\n"
         assert _COMMONMARK.render(rendered) == f'<p>a<br><a href="{url}">link</a><br>b</p>\n'
 
+    # PR #1088 QA round 1: a space between the edge break and the run's own
+    # edge kept the break inside the link, on both the plain and code paths.
+    @pytest.mark.parametrize("code", [False, True])
+    def test_space_beside_edge_break_stays_outside_the_link(self, code):
+        url = "https://e.example"
+        run = (_code if code else Run)(text=" \nlink\n ", link_url=url)
+        rendered = ast_to_markdown([Paragraph(runs=[Run(text="a"), run, Run(text="b")])])
+        inner = "`link`" if code else "link"
+        assert rendered == f"a <br>[{inner}]({url})<br> b\n"
+        html = _COMMONMARK.render(rendered)
+        inner_html = "<code>link</code>" if code else "link"
+        assert html == f'<p>a <br><a href="{url}">{inner_html}</a><br> b</p>\n'
+
+    def test_space_beside_edge_break_in_table_cell(self):
+        url = "https://e.example"
+        cell = Cell(children=[Run(text="x"), Run(text=" \nlink", link_url=url)])
+        rendered = ast_to_markdown([Table(rows=[Row(cells=[cell])])])
+        assert rendered == f"| x <br>[link]({url}) |\n| --- |\n"
+
+    def test_code_run_of_whitespace_and_breaks_keeps_the_fence(self):
+        # Its link can't render, so it doesn't give up the fenced block.
+        nodes = [Paragraph(runs=[_code("x"), _code(" \n ", link_url="https://e.example")])]
+        assert ast_to_markdown(nodes).startswith("```\nx")
+
     def test_break_only_run(self):
         nodes = [Paragraph(runs=[Run(text="a"), Run(text="\n", bold=True), Run(text="b")])]
         assert self._html(nodes) == "<p>a<br>b</p>\n"

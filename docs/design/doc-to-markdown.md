@@ -133,8 +133,10 @@ Three gaps were kept **as documented limitations, not implementation shortcuts**
 - **Line breaks in plain text** (#1057): a `"\n"` inside a non-code run renders as `<br>`, the
   same as in a code run or a table cell. A raw newline would be a Markdown soft break, joining
   the lines, and could start a new block mid-paragraph ("# x" on the next line). A trailing
-  backslash hard break would end an ATX heading or a list item's line instead. Line breaks at
-  either end of a run go outside its link and emphasis markers.
+  backslash hard break would end an ATX heading or a list item's line instead. A run's edges, up
+  to its outermost line break and including any whitespace beside it, render outside its link,
+  emphasis, and code span (`_split_edge_breaks`, shared by plain and code runs; a space beside the
+  break kept it inside the link until PR #1088 QA round 1).
 - **Linked images** (#951): Docs puts an image's link on its `inlineObjectElement`'s own
   `textStyle.link`, the same as a text run (confirmed live). `doc_to_ast` reads it into
   `Image.link_url`, and every image renders through `_render_image` as `[![alt](src)](url)`, in
