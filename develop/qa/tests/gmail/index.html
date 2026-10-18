@@ -2163,6 +2163,8 @@
 - Every item has <code>id</code> and <code>thread_id</code>
 - No <code>next_page_token</code> (the fixture set fits in one page of 50)
 - No <code>error</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm02-invalid-label-filter-returns-api-error">TC-GM02: Invalid label filter returns API error<a class="headerlink" href="#tc-gm02-invalid-label-filter-returns-api-error" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2170,6 +2172,8 @@
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception
 - The error text comes from the Gmail API (mentions the label)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm34-pagination-and-max_results-clamping-list_messages-list_threads">TC-GM34: Pagination and <code>max_results</code> clamping (<code>list_messages</code> + <code>list_threads</code>)<a class="headerlink" href="#tc-gm34-pagination-and-max_results-clamping-list_messages-list_threads" title="Permanent link">&para;</a></h3>
 <p>The 7 <code>page-N</code> fixtures share the subject prefix <code>[mcp-qa:page]</code>, and each is its own thread. Confirmed live 2026-09-26 that this query matches exactly those 7.</p>
@@ -2188,6 +2192,8 @@
 - Step 6: all 7 messages, no <code>next_page_token</code>, no <code>error</code> (clamped down to 500)
 - Don't check <code>result_size_estimate</code>. It's Gmail's estimate, not a count: live 2026-09-26, step 1 reported <code>201</code> for this 7-message query.</p>
 <p><strong>Result (2026-10-06, PR #928 round 1) ✅ PASS (regression, #795's shared <code>_list_kwargs</code>/<code>_list_page</code>)</strong>: via <code>mcp-gee-sweet-kit</code>. <code>list_messages</code> and <code>list_threads</code> both paged 3/3/1 with <code>next_page_token</code> on the first two pages only, and the 7 IDs were distinct. Thread items carry <code>id</code>, <code>snippet</code>, and <code>history_id</code>. <code>max_results: 0</code> returned exactly 1 message, and <code>9999</code> returned all 7 with no token.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm35-spam-and-trash-are-excluded-unless-asked-for">TC-GM35: Spam and trash are excluded unless asked for<a class="headerlink" href="#tc-gm35-spam-and-trash-are-excluded-unless-asked-for" title="Permanent link">&para;</a></h3>
 <p>The <code>spam</code> and <code>trash</code> fixtures are inserted already labeled <code>SPAM</code> / <code>TRASH</code>.</p>
@@ -2201,6 +2207,8 @@
 - Steps 2 and 4: exactly 1 message each
 - No <code>error</code> field in any response</p>
 <p>(Steps 1–2 confirmed live 2026-09-26 while writing this case: 0 then 1.)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="get_message"><code>get_message</code><a class="headerlink" href="#get_message" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm03-fetch-the-plain-fixture">TC-GM03: Fetch the plain fixture<a class="headerlink" href="#tc-gm03-fetch-the-plain-fixture" title="Permanent link">&para;</a></h3>
@@ -2213,12 +2221,16 @@
 - <code>body_plain</code> is <code>mcp-gee-sweet plain fixture.</code> (ignore trailing whitespace); <code>body_html</code> is <code>null</code>; <code>attachments</code> is <code>[]</code>
 - <code>label_ids</code> includes <code>{TEST_GMAIL_LABEL_ID}</code>
 - No <code>error</code> or <code>body_decode_errors</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm04-non-existent-message-id">TC-GM04: Non-existent message ID<a class="headerlink" href="#tc-gm04-non-existent-message-id" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
 1. <code>get_message</code> with <code>message_id: "totally-invalid-message-id-xyz"</code></p>
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm26-non-utf-8-labeled-bodies-still-decode-correctly-issue-792-requires-oauth">TC-GM26: Non-UTF-8-labeled bodies still decode correctly (issue #792) ⚠️ requires-oauth<a class="headerlink" href="#tc-gm26-non-utf-8-labeled-bodies-still-decode-correctly-issue-792-requires-oauth" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> #792 assumed <code>get_message</code>/<code>get_thread</code> garble ISO-8859-1 / Windows-1252 / Shift_JIS mail because they decode <code>body.data</code> as UTF-8 regardless of the part's <code>Content-Type</code> charset. PR #816 round 1 showed live that the premise is false. The Gmail API already transcodes every text part's <code>body.data</code> to UTF-8 but keeps the original charset label, so the UTF-8-only decode is correct and decoding with the declared charset garbles. This case now guards that: a part labeled with a non-UTF-8 charset must still come back as the right text. The fixtures are built from raw bytes, not <code>MIMEText</code>. <code>MIMEText(..., 'shift_jis')</code> silently emits <code>charset="iso-2022-jp"</code>, which never exercised Shift_JIS. The fixtures are <em>inserted</em> (not sent), so nothing leaves the QA mailbox.</p>
@@ -2270,6 +2282,8 @@
 <p><strong>Cleanup:</strong> <code>trash_message</code> both fixtures.</p>
 <p><strong>Result</strong> (2026-09-26, PR #816 round 1, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>FAIL</strong>. Step 1 <code>body_plain</code> = <code>CafÃ© crÃ¨me, naÃ¯ve</code> (mojibake). <code>body_html</code> = <code>&lt;p&gt;こんにちは世界&lt;/p&gt;</code> (correct). Step 2 identical. No <code>error</code> field. Root cause, confirmed via raw <code>format=full</code> vs <code>format=raw</code> inspection: the Gmail API already transcodes every text part's <code>body.data</code> to UTF-8, while the part's <code>Content-Type</code> header keeps the original charset label. Wire bytes <code>Caf=E9</code> (iso-8859-1 QP) arrive in <code>body.data</code> as <code>Caf\xc3\xa9</code>, so decoding with the declared charset double-decodes. Note: Python's <code>MIMEText(..., 'shift_jis')</code> actually emits <code>charset="iso-2022-jp"</code>, so the fixture's HTML part never exercised Shift_JIS. A second probe with a raw base64 <code>charset=shift_jis</code> part and an 8bit <code>charset=windows-1252</code> part showed the same UTF-8 transcoding. <code>get_message</code> returned the Shift_JIS part as <code>縺薙ｓ縺ｫ縺｡縺ｯ荳也阜</code> (UTF-8 bytes that happen to be valid Shift_JIS). The cp1252 part came out correct only because byte <code>0x9d</code> is undefined in cp1252, which forced the UTF-8 fallback. The pre-#792 UTF-8-only decode was correct for all three. Both fixtures trashed.</p>
 <p><strong>Result</strong> (2026-09-26, PR #816 round 2 at <code>1daec0a</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS</strong>. Step 1: <code>body_plain</code> = <code>Café crème, naïve</code>, <code>body_html</code> = <code>&lt;p&gt;こんにちは世界&lt;/p&gt;</code>. Step 2: the one message has identical bodies. Step 3: <code>body_plain</code> = <code>“Smart quotes” – 5</code>. No mojibake, no <code>�</code>, and no <code>error</code> or <code>body_decode_errors</code> field in any response. Both fixtures trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm27-unicode-subject-and-bodies-decode-intact">TC-GM27: Unicode subject and bodies decode intact<a class="headerlink" href="#tc-gm27-unicode-subject-and-bodies-decode-intact" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2280,6 +2294,8 @@
 - <code>body_html</code> contains <code>Grüße aus &lt;b&gt;Zürich&lt;/b&gt; — naïve café, 日本語, emoji 🎉🚀.</code>
 - No mojibake (<code>Ã</code>, <code>â€</code>) and no <code>�</code> in any header or body
 - No <code>error</code> or <code>body_decode_errors</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Tool returns the stored text/plain part faithfully: Gmail rebuilt it as "<em>Zürich</em>". The TC's expected value is stale.</p>
 <hr />
 <h3 id="tc-gm28-attachment-metadata-including-a-nameless-inline-image">TC-GM28: Attachment metadata, including a nameless inline image<a class="headerlink" href="#tc-gm28-attachment-metadata-including-a-nameless-inline-image" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2291,6 +2307,8 @@
 - Step 1: the CSV's content does <strong>not</strong> leak into <code>body_plain</code> (it's an attachment, not a second text body)
 - Step 2: <code>body_html</code> contains <code>cid:mcp-qa-inline-png</code>
 - Step 2: <code>attachments</code> has one entry with <code>mime_type: "image/png"</code>, <code>filename: null</code>, and a non-null <code>attachment_id</code>. Gmail stores the nameless inline image by <code>attachmentId</code> (plan §5 P3, live 2026-09-26), so it is listed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm29-a-forwarded-message-doesnt-replace-the-outer-body">TC-GM29: A forwarded message doesn't replace the outer body<a class="headerlink" href="#tc-gm29-a-forwarded-message-doesnt-replace-the-outer-body" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2300,6 +2318,8 @@
 - <code>attachments</code> includes an entry with <code>filename: "forwarded.eml"</code> and <code>mime_type: "message/rfc822"</code>
 - No <code>error</code> field</p>
 <p>Depends on how Gmail stores delivered mail (plan §5 P2). In a release pass, repeat on a second, freshly sent seed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm30-large-bodies-gmail-delivers-by-attachmentid-are-fetched-capped-and-writable-via-local_path-issue-825-requires-oauth">TC-GM30: Large bodies Gmail delivers by <code>attachmentId</code> are fetched, capped, and writable via <code>local_path</code> (issue #825) ⚠️ requires-oauth<a class="headerlink" href="#tc-gm30-large-bodies-gmail-delivers-by-attachmentid-are-fetched-capped-and-writable-via-local_path-issue-825-requires-oauth" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> Gmail returns a large text body (somewhere between ~400 KB and 3 MB) from <code>messages.get(format=full)</code> as a nameless part carrying <code>body.attachmentId</code>, with no inline <code>data</code>. Before #825, <code>get_message</code>/<code>get_thread</code> listed such parts as nameless attachments and returned <code>body_plain</code>/<code>body_html</code> as <code>null</code>. The fix fetches them with <code>users.messages.attachments.get</code>. That endpoint returns the part's raw bytes in its declared charset, unlike inline <code>body.data</code>, which Gmail transcodes to UTF-8 (TC-GM26), so the fetched bytes decode with the part's own charset. A ~6 MB message exceeds the default <code>MAX_TOOL_RESPONSE_CHARS</code>, so it hits the normal size-cap error, and <code>local_path</code> bypasses the cap. The parts' own decoded sizes are a lower bound on the response, so without <code>local_path</code> the error is raised before anything is downloaded (PR #829 round 2). Round 2 also remaps two common charset mislabels before decoding a fetched body: <code>us-ascii</code> is decoded as UTF-8 and <code>iso-8859-1</code> as windows-1252. Step 7 checks that. The early size check counts only parts whose charset guarantees at least one serialized character per byte, so a UTF-16 part over 1,000,000 bytes that serializes under the cap still comes back inline (PR #829 round 3); step 8 checks that. Fetch-failure reporting (<code>attachment_id</code> in <code>body_fetch_errors</code>, errors copied into the <code>local_path</code> manifest, a later inline part used as the fallback), a missing <code>data</code> field, and the bounded fetch concurrency can't be forced against the live API; unit tests cover them. Steps 1–4 use the seeded <code>large-body</code> fixture (<code>TEST_GMAIL_LARGE_ID</code>, a real delivery: both its 3 MB <code>text/plain</code> and <code>text/html</code> parts arrive by <code>attachmentId</code>; check with <code>uv run python scripts/qa_gmail_fixtures.py inspect</code>). Steps 5 and 7 use <em>inserted</em> fixtures: <code>messages.insert</code> produces the same <code>attachmentId</code> layout, confirmed live on #825.</p>
@@ -2381,6 +2401,8 @@
 <p><strong>Result</strong> (2026-09-26, PR #829 round 1 at <code>e30c2d1</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS</strong> on every listed check. Step 1: size-cap error naming <code>get_message</code>, 6,190,675 characters, and <code>Pass local_path</code>. Step 2: manifest <code>{local_path, bytes_written: 6190675, message_id}</code>, file named <code>message_{TEST_GMAIL_LARGE_ID}.json</code>. <code>body_plain</code> is 3,000,002 characters and <code>body_html</code> is 3,037,987 characters, both with the expected prefixes. <code>attachments</code> = <code>[]</code>, no error keys. The thread ID equals the message ID. Step 3: size-cap error naming <code>get_thread</code>, 6,190,757 characters. Step 4: <code>message_count</code> = 1, and the file's <code>body_plain</code> is 3,000,002 characters. Step 5: <code>body_plain</code> (2,970,000 characters) starts <code>Café crème brûlée TC-GM29.</code> and <code>body_html</code> (4,200,000 characters) starts <code>&lt;p&gt;こんにちは TC-GM29&lt;/p&gt;</code>. Neither contains <code>Ã</code> or <code>�</code>, and <code>attachments</code> = <code>[]</code>. Step 6: <code>mcp-qa.pdf</code> and <code>mcp-qa.csv</code> are both still listed, with <code>attachment_id</code>s. Charset fixture trashed and <code>{OUT_DIR}</code> deleted. The PR still went back to the Dev for code-review findings that this case doesn't exercise (fetch-failure reporting, concurrency, charset mislabels, the manifest omitting errors). See the PR #829 comment.</p>
 <p><strong>Result</strong> (2026-09-26, PR #829 round 2 at <code>04dd085</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>FAIL</strong>. All 7 listed steps passed. Steps 1 and 3: <code>would be at least 6037989 characters</code>, returned without downloading. Steps 2 and 4: the same lengths as round 1, with no error keys. Step 5: clean iso-8859-1 and iso-2022-jp bodies. Step 6: PDF and CSV still listed. Step 7: <code>“Smart” – quotes</code>, <code>&lt;p&gt;Café “UTF-8”</code>, no C1 controls, no <code>Ã</code>/<code>â€</code>/<code>�</code>, no error keys. The case fails on an unlisted probe of the new pre-download check. <code>_deferred_body_bytes</code> treats <code>body.size</code> (bytes in the part's own charset) as a lower bound on serialized characters, which is false for UTF-16, UTF-32 and iso-2022-jp. An inserted single-part <code>text/plain; charset=utf-16</code> message with a 1,188,002-byte body decodes correctly to 594,000 characters, and written via <code>local_path</code> it is 612,717 characters. Without <code>local_path</code>, <code>get_message</code> still refuses it: <code>the response would be at least 1188002 characters, over the 1000000-character safety cap</code>. Sent back to the Dev on PR #829. All three inserted fixtures trashed and <code>{OUT_DIR}</code> deleted.</p>
 <p><strong>Result</strong> (2026-09-26, PR #829 round 3 at <code>dca6ce4</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS</strong>. Scoped re-verification of the size-floor fix: steps 1, 3, 7 and 8 were re-run. Steps 2, 4, 5 and 6 are unaffected by the fix's diff and passed in round 2. Steps 1 and 3: <code>would be at least 6037989 characters</code>, so the floor still fires for the ASCII fixture. Step 7: <code>“Smart” – quotes</code> and <code>&lt;p&gt;Café “UTF-8”</code>, with no C1 controls, <code>Ã</code>/<code>â€</code>, <code>�</code> or error keys (decoding now goes through <code>_codec_for</code>). Step 8: the UTF-16 fixture returned <strong>inline</strong> (589,674 characters, no size-cap error). <code>body_plain</code> is 570,000 characters and starts <code>UTF-16 body line for TC-GM30.</code>, with no <code>�</code> and no error keys. Both inserted fixtures trashed and <code>{OUT_DIR}</code> deleted.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm32-latin-1-body-decodes-correctly-seeded-companion-to-tc-gm26">TC-GM32: Latin-1 body decodes correctly (seeded companion to TC-GM26)<a class="headerlink" href="#tc-gm32-latin-1-body-decodes-correctly-seeded-companion-to-tc-gm26" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> #792 closed with the finding that Gmail transcodes every text part's <code>body.data</code> to UTF-8 (see TC-GM26). The <code>latin1</code> fixture is a <code>charset=iso-8859-1</code> part that needs no setup script, so this case is a cheap regression check for the same behavior. Expected to <strong>pass</strong>.</p>
@@ -2389,6 +2411,8 @@
 <p><strong>Checks</strong>
 - <code>body_plain</code> is <code>Café, niño, façade - ISO-8859-1 body (#792).</code> (ignore trailing whitespace)
 - No mojibake (<code>CafÃ©</code>), no <code>�</code>, no <code>body_decode_errors</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm46-include_body-false-returns-headers-without-body-or-attachments-issue-793">TC-GM46: <code>include_body: false</code> returns headers without body or attachments (issue #793)<a class="headerlink" href="#tc-gm46-include_body-false-returns-headers-without-body-or-attachments-issue-793" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> <code>include_body: false</code> fetches with Gmail's <code>format='metadata'</code>, which returns headers but no payload parts (confirmed live 2026-10-04). So the result omits attachment metadata as well as the body.</p>
@@ -2400,6 +2424,8 @@
 - No <code>body_plain</code>, <code>body_html</code>, <code>attachments</code>, <code>body_decode_errors</code>, <code>body_fetch_errors</code>, or <code>error</code> key</p>
 <p><strong>Result</strong> (2026-10-04, PR #885 round 1 at <code>47937d8</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS</strong>. <code>id</code>, <code>thread_id</code>, <code>snippet</code> (<code>mcp-gee-sweet attachments fixture: a PDF and a CSV.</code>), <code>label_ids</code>, <code>internal_date</code> and <code>size_estimate</code> = 7893 present. <code>headers.subject</code> = <code>[mcp-qa:attachments] PDF + CSV</code>, <code>headers.from</code> = <code>{SENDER}</code>, <code>headers.message_id</code> non-empty. No body, attachment, error-list or <code>error</code> keys. The PR still went back to the Dev for code-review findings this case doesn't exercise; see the PR #885 comment.</p>
 <p><strong>Result</strong> (2026-10-04, PR #885 round 2 at <code>48bf23f</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS (regression)</strong>. The output matches round 1 field for field. The fix's <code>metadataHeaders</code> filter can't be seen through shaping, so it was checked against the raw API instead (see TC-GM31's round 2 result).</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="list_threads"><code>list_threads</code><a class="headerlink" href="#list_threads" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm05-list-the-fixture-threads">TC-GM05: List the fixture threads<a class="headerlink" href="#tc-gm05-list-the-fixture-threads" title="Permanent link">&para;</a></h3>
@@ -2409,12 +2435,16 @@
 - <code>threads</code> includes <code>{TEST_THREAD_ID}</code> and <code>{TEST_GMAIL_BIG_THREAD_ID}</code>
 - Every item has <code>id</code>; <code>snippet</code> and <code>history_id</code> keys are present
 - No <code>next_page_token</code>, no <code>error</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm06-invalid-label-filter-returns-api-error">TC-GM06: Invalid label filter returns API error<a class="headerlink" href="#tc-gm06-invalid-label-filter-returns-api-error" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
 1. <code>list_threads</code> with <code>label_ids: ["TOTALLY_INVALID_LABEL_XYZ"]</code></p>
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="get_thread"><code>get_thread</code><a class="headerlink" href="#get_thread" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm07-fetch-the-thread-fixture">TC-GM07: Fetch the thread fixture<a class="headerlink" href="#tc-gm07-fetch-the-thread-fixture" title="Permanent link">&para;</a></h3>
@@ -2424,12 +2454,16 @@
 - <code>id</code> is <code>{TEST_THREAD_ID}</code>; <code>messages</code> has at least 3 entries
 - Every message has <code>id</code>, <code>thread_id</code>, <code>label_ids</code>, <code>headers</code>, <code>body_plain</code>, <code>body_html</code>, and <code>attachments</code>, shaped like <code>get_message</code>
 - No <code>error</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm08-non-existent-thread-id">TC-GM08: Non-existent thread ID<a class="headerlink" href="#tc-gm08-non-existent-thread-id" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
 1. <code>get_thread</code> with <code>thread_id: "totally-invalid-thread-id-xyz"</code></p>
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm31-an-over-cap-thread-returns-the-size-cap-error-and-include_body-false-lists-it-issue-793">TC-GM31: An over-cap thread returns the size-cap error, and <code>include_body: false</code> lists it (issue #793)<a class="headerlink" href="#tc-gm31-an-over-cap-thread-returns-the-size-cap-error-and-include_body-false-lists-it-issue-793" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> the <code>over-cap-thread</code> fixture is 3 messages of ~400 KB each, which is over the default <code>MAX_TOOL_RESPONSE_CHARS</code> in full format but under it per message. The full fetch should refuse cleanly rather than drop the connection or truncate. Since #793, <code>include_body: false</code> fetches only metadata, which is small enough to list the thread's message IDs.</p>
@@ -2445,6 +2479,8 @@
 - Step 3: succeeds, with a <code>body_plain</code> that starts <code>mcp-gee-sweet over-cap-thread message</code></p>
 <p><strong>Result</strong> (2026-10-04, PR #885 round 1 at <code>47937d8</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS</strong>. Step 1: <code>get_thread: the response is 1275124 characters, over the 1000000-character safety cap</code>, with the hint naming <code>include_body=False</code> then <code>get_message</code> on individual IDs; no partial thread, and the next call worked. Step 2: no <code>error</code>, 3 messages, each with <code>id</code>, <code>thread_id</code>, <code>snippet</code>, <code>label_ids</code>, <code>size_estimate</code> (~412 KB each) and <code>headers</code> (subjects contain <code>[mcp-qa:over-cap-thread]</code>; <code>in_reply_to</code>/<code>references</code> chain correctly), no body or attachment keys; the response was about 3 KB. Step 3: run with <code>local_path</code> to keep ~425 KB out of the QA session's context (424,899 bytes written); <code>body_plain</code> starts <code>mcp-gee-sweet over-cap-thread message 1.</code>. The thread-level <code>snippet</code> is <code>null</code>, the same as the full format (<code>threads.get</code> returns none).</p>
 <p><strong>Result</strong> (2026-10-04, PR #885 round 2 at <code>48bf23f</code>, <code>mcp-gee-sweet-kit</code>, OAuth token with <code>gmail.modify</code>): <strong>PASS</strong>. Steps 1–3 matched round 1 exactly (1,275,124-character cap error with the <code>include_body=False</code> hint; 3 metadata-only messages; step 3 via <code>local_path</code>, 424,899 bytes). The <code>metadataHeaders</code> filter was checked with a fresh-interpreter raw <code>threads.get</code> on the same thread using this slot's token. Plain <code>format=metadata</code> returned 24,591 bytes and 88 headers (ARC-<em>, DKIM-Signature, Received, X-Gm-</em>, and others). <code>_get_format_kwargs(False)</code> returned 3,003 bytes and 19 headers, all from the shaped set (Date, From, In-Reply-To, Message-ID, References, Subject, To).</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm33-thread-order-and-reply-headers">TC-GM33: Thread order and reply headers<a class="headerlink" href="#tc-gm33-thread-order-and-reply-headers" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2457,6 +2493,8 @@
 - M1 <code>headers.in_reply_to</code> is <code>null</code>
 - M2 <code>headers.in_reply_to</code> equals M1 <code>headers.message_id</code>
 - M3 <code>headers.in_reply_to</code> equals M2 <code>headers.message_id</code>, and M3 <code>headers.references</code> contains both M1's and M2's <code>message_id</code>, in that order</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="list_labels"><code>list_labels</code><a class="headerlink" href="#list_labels" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm09-list-system-and-user-labels">TC-GM09: List system and user labels<a class="headerlink" href="#tc-gm09-list-system-and-user-labels" title="Permanent link">&para;</a></h3>
@@ -2467,9 +2505,13 @@
 - Includes an entry with <code>name: "mcp-qa-fixture"</code>, <code>type: "user"</code>, and <code>id</code> equal to <code>{TEST_GMAIL_LABEL_ID}</code>
 - Every item has <code>id</code>, <code>name</code>, <code>type</code>
 - No <code>error</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm10-retired">TC-GM10: (retired)<a class="headerlink" href="#tc-gm10-retired" title="Permanent link">&para;</a></h3>
 <p>Retired by #822. The Gmail-scope failure path is covered deterministically by TC-I32 (<code>infra.md</code>), which uses a scope-less token copy. Don't reuse this ID.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm36-add-and-remove-a-user-label-by-id-destructive">TC-GM36: Add and remove a user label by ID ⚠️ destructive<a class="headerlink" href="#tc-gm36-add-and-remove-a-user-label-by-id-destructive" title="Permanent link">&para;</a></h3>
 <p>Uses a throwaway, not a fixture: removing <code>mcp-qa-fixture</code> from a fixture would hide it from every read case.</p>
@@ -2482,6 +2524,8 @@
 - Step 3: <code>label_ids</code> no longer includes it
 - No <code>error</code> field in any response</p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> <code>{GM36_ID}</code>.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="send_message"><code>send_message</code><a class="headerlink" href="#send_message" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm11-send-to-a-plus-address-destructive">TC-GM11: Send to a plus-address ⚠️ destructive<a class="headerlink" href="#tc-gm11-send-to-a-plus-address-destructive" title="Permanent link">&para;</a></h3>
@@ -2493,6 +2537,8 @@
 - Step 2: <code>messages</code> includes <code>{GM11_ID}</code>
 - No <code>error</code> field</p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> <code>{GM11_ID}</code>.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm12-invalid-recipient-returns-an-error">TC-GM12: Invalid recipient returns an error<a class="headerlink" href="#tc-gm12-invalid-recipient-returns-an-error" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2500,6 +2546,8 @@
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception, and no <code>id</code>
 - If it returns an <code>id</code> instead, record FAIL and trash that ID</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm38-html-body-with-attachments-from-both-sources-destructive-local-filesystem">TC-GM38: HTML body with attachments from both sources ⚠️ destructive ⚠️ local-filesystem<a class="headerlink" href="#tc-gm38-html-body-with-attachments-from-both-sources-destructive-local-filesystem" title="Permanent link">&para;</a></h3>
 <p><strong>Setup:</strong> <code>printf 'name,qty\nwidget,3\n' &gt; /tmp/mcp-qa-tc-gm38.csv</code> on the machine running the server.</p>
@@ -2515,6 +2563,8 @@
 <p><strong>Cleanup:</strong> <code>trash_message</code> the step-1 <code>id</code>; delete <code>/tmp/mcp-qa-tc-gm38.csv</code>.</p>
 <p><strong>Result (2026-10-06, PR #928 round 1) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code>. Both bodies matched. There were 2 attachments: <code>mcp-qa-tc-gm38.csv</code> (<code>text/csv</code>, 18 bytes, read through <code>_compose_raw</code>'s off-loop thread) and <code>note.txt</code>, whose <code>mime_type</code> was <code>text/plain</code>, guessed. The message was trashed and the local file deleted.</p>
 <p><strong>Result (2026-10-07, PR #928 round 2) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code> at <code>1d3c7cf</code>. Both bodies matched. There were 2 attachments: <code>mcp-qa-tc-gm38.csv</code> (<code>text/csv</code>, 18 bytes) and <code>note.txt</code> (<code>text/plain</code>, guessed, 18 bytes). The message was trashed and the local file deleted.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm39-cc-and-bcc-as-lists-destructive">TC-GM39: <code>cc</code> and <code>bcc</code> as lists ⚠️ destructive<a class="headerlink" href="#tc-gm39-cc-and-bcc-as-lists-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2525,6 +2575,8 @@
 - <code>headers.bcc</code> contains <code>{QA+tc-gm39-bcc}</code> (the sender's own copy keeps Bcc; TC-GM45 checks that the delivered copy doesn't)
 - <code>headers.to</code> is <code>{QA+tc-gm39}</code></p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> the step-1 <code>id</code>.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm40-a-newline-in-the-subject-is-rejected-header-injection-destructive">TC-GM40: A newline in the subject is rejected (header injection) ⚠️ destructive<a class="headerlink" href="#tc-gm40-a-newline-in-the-subject-is-rejected-header-injection-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2535,6 +2587,8 @@
 - Steps 1 and 2: each returns <code>{"error": "..."}</code> and no <code>id</code>. A local probe (2026-09-26) raises <code>HeaderParseError</code> for step 1 and <code>HeaderWriteError</code> for step 2, both inside the tool's <code>try</code>.
 - Step 3: <code>messages</code> is empty, so nothing was sent</p>
 <p><strong>Cleanup:</strong> none expected. If step 3 finds anything, record FAIL and trash it.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm47-an-attachment-without-mime_type-gets-its-type-from-the-filename-extension-issue-802-destructive">TC-GM47: An attachment without <code>mime_type</code> gets its type from the filename extension (issue #802) ⚠️ destructive<a class="headerlink" href="#tc-gm47-an-attachment-without-mime_type-gets-its-type-from-the-filename-extension-issue-802-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> an attachment passed without <code>mime_type</code> used to go out as <code>application/octet-stream</code> whatever its name, so recipients' clients couldn't preview it. #802 guesses the type from the filename's extension, using Python's built-in table only, so the result doesn't depend on the server host's own MIME database. A compressed file (<code>.gz</code>) gets the compression type, not the type of what's inside it. PR #928 round 2 added two rules. A guessed <code>message/*</code> type (<code>.eml</code>, <code>.mht</code>) falls back to <code>application/octet-stream</code>, since base64, which every attachment uses, is forbidden on <code>message/rfc822</code>. A guessed <code>text/*</code> type gets <code>charset=utf-8</code> when its bytes are valid UTF-8, and falls back to <code>application/octet-stream</code> when they aren't. <code>get_message</code> doesn't show the charset, so that part is unit-tested only (<code>TestBuildRawMessageAttachments</code>).</p>
@@ -2561,6 +2615,8 @@
 <p><strong>Result (2026-10-07, PR #928 round 2) ✅ PASS (as written), with a send-back finding out of scope for this case</strong>: via <code>mcp-gee-sweet-kit</code>, after reconnecting to <code>1d3c7cf</code>. All 6 attachments came back as expected: <code>gm47.pdf</code> → <code>application/pdf</code>, <code>gm47.csv.gz</code> → <code>application/gzip</code>, <code>gm47.zzzunknown</code> → <code>application/octet-stream</code>, <code>gm47.png</code> → <code>text/plain</code> (explicit wins), <code>gm47.eml</code> → <code>application/octet-stream</code>, <code>gm47.txt</code> → <code>text/plain</code>. No <code>error</code>. A probe in the same round sent an explicit <code>mime_type</code> with one empty half: <code>"application/"</code> and <code>"/pdf"</code> passed <code>_attachment_part</code>'s malformed-type check, and Gmail stored them verbatim as the attachments' <code>mime_type</code> (<code>application/</code>, <code>/pdf</code>). Before #896 these became <code>application/octet-stream</code> and <code>application/pdf</code>. An explicit <code>message/rfc822</code> <code>fwd.eml</code> with an 8-bit UTF-8 body came back as <code>message/rfc822</code> (115 bytes). Both messages were trashed.</p>
 <p><strong>Result (2026-10-07, PR #928 round 3) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code>, after reconnecting to <code>542f548</code>. All 6 attachments came back with the same <code>mime_type</code>s as round 2, with no <code>error</code>. Re-running round 2's probe, <code>send_message</code> with an explicit <code>mime_type</code> of <code>"application/"</code> and then <code>"/pdf"</code> each returned <code>{"error": "Attachment mime_type '...' isn't a type/subtype such as 'application/pdf'."}</code> and no <code>id</code>. A <code>list_messages</code> search with <code>include_spam_trash: true</code> found nothing sent. The TC-GM47 message was trashed.</p>
 <p><strong>Result (2026-10-07, PR #928 after the <code>develop</code> merge <code>548e691</code>) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code>, after reconnecting to the merge, which brought in #925's OAuth re-authorization. All 6 attachments came back with the same <code>mime_type</code>s as before, with no <code>error</code>. The message was trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="create_draft"><code>create_draft</code><a class="headerlink" href="#create_draft" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm13-create-a-draft-destructive">TC-GM13: Create a draft ⚠️ destructive<a class="headerlink" href="#tc-gm13-create-a-draft-destructive" title="Permanent link">&para;</a></h3>
@@ -2571,6 +2627,8 @@
 - Step 1: returns <code>id</code> and <code>message.id</code>, no <code>error</code>
 - Step 2: <code>label_ids</code> includes <code>DRAFT</code> and not <code>SENT</code></p>
 <p><strong>Cleanup:</strong> TC-GM15 sends this draft. If TC-GM15 isn't run, <code>qa_gmail_fixtures.py reset</code> deletes it (the tools can't delete a draft).</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm14-invalid-attachment-shape">TC-GM14: Invalid attachment shape<a class="headerlink" href="#tc-gm14-invalid-attachment-shape" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2578,6 +2636,8 @@
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code> that mentions <code>local_path</code> and <code>content_base64</code>, and no draft <code>id</code></p>
 <p><strong>Result (2026-10-06, PR #928 round 1) ✅ PASS (regression, error now raised inside <code>_compose_raw</code>'s thread)</strong>: returned <code>{"error": "Each attachment needs either local_path or content_base64 (plus optional filename and mime_type)."}</code>, with no draft <code>id</code>.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm41-draft-with-html-and-an-attachment-survives-send_draft-destructive">TC-GM41: Draft with HTML and an attachment survives <code>send_draft</code> ⚠️ destructive<a class="headerlink" href="#tc-gm41-draft-with-html-and-an-attachment-survives-send_draft-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2592,6 +2652,8 @@
 - Step 4: the attachment's <code>filename</code>, <code>mime_type</code>, and <code>size</code> equal step 2's</p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> the step-3 <code>id</code>.</p>
 <p><strong>Result (2026-10-06, PR #928 round 1) ✅ PASS (regression, <code>create_draft</code>/<code>send_draft</code> via <code>_compose_raw</code> and <code>_message_summary</code>)</strong>: step 2 had one attachment, <code>gm41.txt</code> (<code>text/plain</code>, 18 bytes), and <code>label_ids</code> <code>DRAFT</code>. <code>send_draft</code> returned <code>id</code>, <code>thread_id</code>, and <code>label_ids</code> (<code>SENT</code>, no <code>DRAFT</code>). Step 4's bodies and attachment <code>filename</code>/<code>mime_type</code>/<code>size</code> equal step 2's. Trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="send_draft"><code>send_draft</code><a class="headerlink" href="#send_draft" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm15-send-an-existing-draft-destructive">TC-GM15: Send an existing draft ⚠️ destructive<a class="headerlink" href="#tc-gm15-send-an-existing-draft-destructive" title="Permanent link">&para;</a></h3>
@@ -2605,12 +2667,16 @@
 - Step 2: <code>label_ids</code> doesn't include <code>DRAFT</code>; <code>headers.subject</code> is <code>[mcp-qa:tc-gm13] draft</code>
 - Step 3: returns <code>{"error": "..."}</code>. The draft is gone, which is the only way the tools can show it left the drafts list.</p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> the step-1 <code>id</code>.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm16-non-existent-draft">TC-GM16: Non-existent draft<a class="headerlink" href="#tc-gm16-non-existent-draft" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
 1. <code>send_draft</code> with <code>draft_id: "totally-invalid-draft-id-xyz"</code></p>
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="reply_to_message"><code>reply_to_message</code><a class="headerlink" href="#reply_to_message" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm17-reply-in-thread-with-correct-threading-headers-destructive">TC-GM17: Reply in-thread with correct threading headers ⚠️ destructive<a class="headerlink" href="#tc-gm17-reply-in-thread-with-correct-threading-headers-destructive" title="Permanent link">&para;</a></h3>
@@ -2629,12 +2695,16 @@
 <p><strong>Result (2026-10-06, PR #928 round 1) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code>. Step 3's <code>thread_id</code> equals the original's, and there was no <code>warning</code> field. Step 4: <code>in_reply_to</code> and <code>references</code> are both the original's Message-ID, the subject is <code>Re: [mcp-qa:tc-gm17] reply original</code> (one <code>Re:</code>), and <code>to</code> is the <code>+tc-gm17</code> address. Both messages were trashed.</p>
 <p><strong>Result (2026-10-07, PR #928 round 2) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code> at <code>1d3c7cf</code>, run right after <code>refresh_cache()</code> with no arguments (which now also clears the cached own-address set), so the reply re-read the send-as aliases. <code>refresh_cache</code> returned <code>{"invalidated": "all"}</code>. Step 3's <code>thread_id</code> equals the original's, and there was no <code>warning</code> field. Step 4: <code>in_reply_to</code> and <code>references</code> are the original's Message-ID, the subject is <code>Re: [mcp-qa:tc-gm17] reply original</code>, and <code>to</code> is the <code>+tc-gm17</code> address. Both messages were trashed.</p>
 <p><strong>Result (2026-10-07, PR #928 after the <code>develop</code> merge <code>548e691</code>) ✅ PASS</strong>: via <code>mcp-gee-sweet-kit</code>, run right after <code>refresh_cache()</code> (<code>{"invalidated": "all"}</code>) on the merged code. The reply has the original's <code>thread_id</code> and no <code>warning</code>. <code>in_reply_to</code> and <code>references</code> are the original's Message-ID, the subject is <code>Re: [mcp-qa:tc-gm17] reply original</code>, and <code>to</code> is the <code>+tc-gm17</code> address. Both messages were trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm18-reply-to-non-existent-message">TC-GM18: Reply to non-existent message<a class="headerlink" href="#tc-gm18-reply-to-non-existent-message" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
 1. <code>reply_to_message</code> with <code>message_id: "totally-invalid-message-id-xyz"</code>, <code>body: "hi"</code></p>
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm23-reply-goes-to-the-originals-reply-to-not-its-from-issue-791-destructive-requires-oauth">TC-GM23: Reply goes to the original's Reply-To, not its From (issue #791) ⚠️ destructive ⚠️ requires-oauth<a class="headerlink" href="#tc-gm23-reply-goes-to-the-originals-reply-to-not-its-from-issue-791-destructive-requires-oauth" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> <code>reply_to_message</code> used to always reply to <code>From</code>, so mail with a <code>Reply-To</code> (mailing lists, support desks, no-reply senders) got the reply at the wrong address. #791 resolves <code>Reply-To</code> over <code>From</code>, like a standard mail client. This reproduces the defect without mailing anyone outside the QA mailbox: the original is <em>inserted</em> (not sent) with a fake <code>From</code> and a <code>Reply-To</code> pointing at a plus-address of the QA mailbox itself.</p>
@@ -2669,6 +2739,8 @@
 <p><strong>Cleanup:</strong> <code>trash_message</code> the fixture, both replies, and their delivered inbox copies.</p>
 <p><strong>Result (2026-09-26, PR #815 round 1) ✅ PASS</strong> — via <code>mcp-gee-sweet-kit</code> (token has <code>gmail.modify</code>), fixture inserted with the setup script. Step 1: <code>reply_to</code> = <code>+tc-gm23</code> address, <code>from</code> = <code>noreply@example.invalid</code>. Step 3: <code>to</code> = <code>+tc-gm23</code> address only. Step 4 (reply-all): <code>to</code> = <code>+tc-gm23</code> address only; the bare mailbox was excluded, and <code>noreply@example.invalid</code> appears nowhere. Both replies share the fixture's <code>thread_id</code>. A reply to your own plus-address is one message labeled <code>SENT</code>+<code>INBOX</code>, not a separate delivered copy, so cleanup is just the fixture plus the two replies. All trashed.</p>
 <p><strong>Result (2026-09-26, PR #815 round 2) ✅ PASS (regression)</strong> — re-run against <code>45530d7</code>: the plain reply and reply-all both go <code>to</code> = <code>+tc-gm23</code> only. The bare mailbox and <code>noreply@example.invalid</code> appear nowhere. Trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm24-replying-to-your-own-sent-message-goes-to-its-original-to-not-back-to-you-issue-791-destructive-requires-oauth">TC-GM24: Replying to your own sent message goes to its original To, not back to you (issue #791) ⚠️ destructive ⚠️ requires-oauth<a class="headerlink" href="#tc-gm24-replying-to-your-own-sent-message-goes-to-its-original-to-not-back-to-you-issue-791-destructive-requires-oauth" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> a plain reply (<code>reply_all: false</code>) to a message the mailbox itself sent used to set <code>To</code> to the mailbox's own address. #791 replies to that message's original <code>To</code> instead, like a standard mail client. A plus-address of the QA mailbox stands in for the other person, so nothing leaves the mailbox.</p>
@@ -2684,6 +2756,8 @@
 <p><strong>Cleanup:</strong> <code>trash_message</code> the fixture, the reply, and their delivered inbox copies.</p>
 <p><strong>Result (2026-09-26, PR #815 round 1) ✅ PASS</strong> — via <code>mcp-gee-sweet-kit</code>. Step 2: <code>label_ids</code> includes <code>SENT</code>. Step 4: <code>to</code> = <code>+tc-gm24</code> address, not the bare mailbox; <code>thread_id</code> matches. Both trashed. <strong>Scope note:</strong> this case covers only a single-recipient <code>To</code>. Live repros of the PR's code-review findings (both plain replies to your own sent mail) failed. <code>To: &lt;mailbox&gt;, &lt;mailbox&gt;+tc-f3</code> replied <code>To: &lt;mailbox&gt;, &lt;mailbox&gt;+tc-f3</code>, so you get a copy of your own reply. <code>Cc</code>-only (no <code>To</code>) replied <code>To: &lt;mailbox&gt;</code> and dropped the Cc'd recipient. Both were sent back to the Dev on PR #815.</p>
 <p><strong>Result (2026-09-26, PR #815 round 2) ✅ PASS (regression)</strong> — re-run against <code>45530d7</code>: the reply goes <code>to</code> = <code>+tc-gm24</code>, same thread. The round-1 scope-note failures are now covered by TC-GM25, which passes. Trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm25-replies-to-your-own-multi-recipient-or-cc-only-sent-mail-never-copy-you-and-never-drop-the-cc-issue-791-destructive-requires-oauth">TC-GM25: Replies to your own multi-recipient or Cc-only sent mail never copy you and never drop the Cc (issue #791) ⚠️ destructive ⚠️ requires-oauth<a class="headerlink" href="#tc-gm25-replies-to-your-own-multi-recipient-or-cc-only-sent-mail-never-copy-you-and-never-drop-the-cc-issue-791-destructive-requires-oauth" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> PR #815 QA round 1 reproduced two live failures TC-GM24 doesn't cover, both on plain replies to your own sent mail. <code>To: &lt;mailbox&gt;, &lt;mailbox&gt;+x</code> replied to both, so you got a copy of your own reply. A <code>Cc</code>-only message (no <code>To</code>) replied <code>To: &lt;mailbox&gt;</code> and dropped the Cc'd person. The fix drops the mailbox's own addresses (primary and send-as aliases) from every reply, and replies to an own message's <code>Cc</code> when nobody else is in <code>To</code>. Plus-addresses of the QA mailbox stand in for other people, so nothing leaves the mailbox. They count as other people because they aren't send-as aliases.</p>
@@ -2701,6 +2775,8 @@
 - Step 6: same as steps 4–5, with the <code>+tc-gm25c</code> address.</p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> all three fixtures, all five replies, and their delivered inbox copies.</p>
 <p><strong>Result (2026-09-26, PR #815 round 2) ✅ PASS</strong> — via <code>mcp-gee-sweet-kit</code> after <code>/mcp reconnect</code>, against fix <code>45530d7</code>. Step 2: <code>to</code> = <code>+tc-gm25a</code> only; the bare mailbox appears nowhere. Steps 4 and 5 (Cc-only, sent with <code>to: []</code>): both <code>to</code> = <code>+tc-gm25b</code>, <code>cc</code> empty. Step 6 (to-self + Cc): plain reply and reply-all both <code>to</code> = <code>+tc-gm25c</code>, <code>cc</code> empty. Also confirmed live with the same token that <code>users.settings.sendAs.list</code> succeeds under <code>gmail.modify</code> and returns the primary address (1 entry, <code>isPrimary: true</code>), so <code>_own_addresses</code> takes its alias-list path rather than the <code>getProfile</code> fallback. All fixtures and replies trashed.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm42-reply-subject-normalization-destructive">TC-GM42: Reply subject normalization ⚠️ destructive<a class="headerlink" href="#tc-gm42-reply-subject-normalization-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2713,6 +2789,8 @@
 - Step 4: <code>headers.subject</code> is exactly <code>RE: [mcp-qa:tc-gm42] upper-case prefix</code> (no <code>Re: RE:</code>)
 - Both replies share their original's <code>thread_id</code></p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> <code>{GM42_A}</code>, <code>{GM42_B}</code>, and both reply IDs. <code>{GM42_A}</code> and its reply have no <code>[mcp-qa</code> subject, so <code>reset</code> won't sweep them; trash them by ID.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm43-reply-from-the-middle-of-a-thread-chains-references-destructive">TC-GM43: Reply from the middle of a thread chains References ⚠️ destructive<a class="headerlink" href="#tc-gm43-reply-from-the-middle-of-a-thread-chains-references-destructive" title="Permanent link">&para;</a></h3>
 <p>Run after TC-GM33. The middle message (M2) was sent by the QA mailbox, so the reply goes to its original <code>To</code>: the sender mailbox. That's an allowed recipient (plan §3.1).</p>
@@ -2727,6 +2805,8 @@
 - Step 3: <code>headers.subject</code> is <code>Re: [mcp-qa:thread] two-party thread</code> (one <code>Re:</code>)
 - Step 3: <code>headers.to</code> is <code>{SENDER}</code></p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> the step-2 <code>id</code>. On the sender side, TC-GM44's cleanup rule applies: trash the delivered copy (<code>Re: [mcp-qa:thread]</code>, body <code>mcp-gee-sweet TC-GM43 reply from the middle</code>) through <code>mcp__mcp-gee-sweet__trash_message</code>.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="modify_labels"><code>modify_labels</code><a class="headerlink" href="#modify_labels" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm19-toggle-unread-on-a-message-and-starred-on-a-thread-destructive">TC-GM19: Toggle UNREAD on a message and STARRED on a thread ⚠️ destructive<a class="headerlink" href="#tc-gm19-toggle-unread-on-a-message-and-starred-on-a-thread-destructive" title="Permanent link">&para;</a></h3>
@@ -2744,6 +2824,8 @@
 - No <code>error</code> field in any response</p>
 <p><strong>Cleanup:</strong> if step 1 showed <code>UNREAD</code>, add it back with <code>modify_labels</code> so the fixture ends as it started.</p>
 <p><strong>Result (2026-10-06, PR #928 round 1) ✅ PASS (regression, <code>modify_labels</code> message branch via <code>_message_summary</code>)</strong>: the message branch returned <code>id</code>, <code>thread_id</code>, and <code>label_ids</code>. <code>UNREAD</code> was added, then removed. On the thread, <code>STARRED</code> was added to every message, then removed from every message. There was no <code>error</code> in any response. The fixture started <code>UNREAD</code>, and <code>UNREAD</code> was restored.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm20-validation-errors">TC-GM20: Validation errors<a class="headerlink" href="#tc-gm20-validation-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2754,6 +2836,8 @@
 - Steps 1 and 2: <code>{"error": "Provide exactly one of message_id or thread_id."}</code>
 - Step 3: <code>{"error": "Provide at least one of add_label_ids or remove_label_ids."}</code>
 - <code>{TEST_MESSAGE_ID}</code>'s labels are unchanged (no API call was made)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="trash_message"><code>trash_message</code><a class="headerlink" href="#trash_message" title="Permanent link">&para;</a></h2>
 <h3 id="tc-gm21-trash-a-throwaway-destructive">TC-GM21: Trash a throwaway ⚠️ destructive<a class="headerlink" href="#tc-gm21-trash-a-throwaway-destructive" title="Permanent link">&para;</a></h3>
@@ -2763,12 +2847,16 @@
 <p><strong>Checks</strong>
 - Step 2: <code>action</code> is <code>"trashed"</code>, <code>label_ids</code> includes <code>TRASH</code>, <code>id</code> matches step 1
 - No <code>error</code> field</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm22-trash-non-existent-message">TC-GM22: Trash non-existent message<a class="headerlink" href="#tc-gm22-trash-non-existent-message" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
 1. <code>trash_message</code> with <code>message_id: "totally-invalid-message-id-xyz"</code></p>
 <p><strong>Checks</strong>
 - Returns <code>{"error": "..."}</code>, not a tool exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm37-trash-twice-then-try-to-restore-by-label-destructive-product-decision">TC-GM37: Trash twice, then try to restore by label ⚠️ destructive 🔍 product decision<a class="headerlink" href="#tc-gm37-trash-twice-then-try-to-restore-by-label-destructive-product-decision" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> the tools have no <code>untrash</code>. Whether <code>modify_labels(remove_label_ids=["TRASH"])</code> restores a message is unverified (plan §2 item 3). This case records the answer. It isn't pass/fail on the restore question: record what happened and update plan §2 item 3 with it.</p>
@@ -2784,6 +2872,8 @@
 - Step 3: either the same success shape (idempotent) or a clean <code>{"error": ...}</code>. <strong>Record which.</strong> Either is acceptable; a tool exception is a FAIL.
 - Steps 4–6: <strong>record</strong> whether step 4 errors, whether <code>TRASH</code> is gone from step 5's <code>label_ids</code>, which other labels it has (<code>INBOX</code>? <code>SENT</code>?), and whether step 6 lists <code>{GM37_ID}</code></p>
 <p><strong>Cleanup:</strong> <code>trash_message</code> <code>{GM37_ID}</code> (a no-op if it's still in trash).</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h2 id="cross-mailbox-delivery">Cross-mailbox delivery<a class="headerlink" href="#cross-mailbox-delivery" title="Permanent link">&para;</a></h2>
 <p>These cases prove what the recipient actually receives, which plus-address cases can't show. The QA-side call is the one under test. Sender-side calls go through <code>mcp__mcp-gee-sweet__*</code> and only observe. Read, and afterwards trash, only the <code>[mcp-qa</code>-subject messages each case names in the sender mailbox.</p>
@@ -2797,6 +2887,8 @@
 - Step 3: the sender mailbox holds its original <code>[mcp-qa:plain] plain text</code> (labeled <code>SENT</code>) and the delivered <code>Re: [mcp-qa:plain] plain text</code> with body <code>mcp-gee-sweet TC-GM44 reply</code>, and <strong>both have the same <code>thread_id</code></strong>
 - Step 3: the delivered reply's <code>headers.in_reply_to</code> equals the original's <code>headers.message_id</code></p>
 <p><strong>Cleanup:</strong> QA: <code>trash_message</code> the step-1 <code>id</code>. Sender: <code>mcp__mcp-gee-sweet__trash_message</code> the delivered reply only. Leave the sender's original: it's the <code>plain</code> fixture's source.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 <hr />
 <h3 id="tc-gm45-bcc-is-stripped-from-the-delivered-copy-destructive-cross-mailbox">TC-GM45: Bcc is stripped from the delivered copy ⚠️ destructive ⚠️ cross-mailbox<a class="headerlink" href="#tc-gm45-bcc-is-stripped-from-the-delivered-copy-destructive-cross-mailbox" title="Permanent link">&para;</a></h3>
 <p><strong>Action</strong>
@@ -2807,6 +2899,8 @@
 - Step 2: <code>headers.cc</code> is <code>{QA+tc-gm45-cc}</code> and <code>headers.bcc</code> is <code>null</code>. A delivered copy that shows Bcc is a FAIL: it leaks the blind recipient.
 - Step 3: the QA mailbox's own copy keeps <code>headers.bcc</code> (as in TC-GM39)</p>
 <p><strong>Cleanup:</strong> QA: <code>trash_message</code> <code>{GM45_ID}</code>. Sender: <code>mcp__mcp-gee-sweet__trash_message</code> the delivered copy.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 1 (oauth) and run 2 (oauth); fixtures 19/19 intact, all test mail trashed.</p>
 
 
 

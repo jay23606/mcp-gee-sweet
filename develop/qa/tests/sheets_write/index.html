@@ -2019,6 +2019,8 @@
 - No <code>error</code> field</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 Row 7 A–D = Test/A/B/C; 4 cells; rows 1–6 unchanged; no error</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w02-write-a-formula-via-user_entered-destructive">TC-W02: Write a formula via USER_ENTERED ⚠️ destructive<a class="headerlink" href="#tc-w02-write-a-formula-via-user_entered-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2031,6 +2033,8 @@ Row 7 A–D = Test/A/B/C; 4 cells; rows 1–6 unchanged; no error</p>
 - Confirms <code>USER_ENTERED</code> input mode</p>
 <p><strong>Result (2026-09-04) ❌ FAIL</strong>
 Prompt formula <code>=A2&amp;' '&amp;A3</code> (single-quote string delims) → E2 = <code>#ERROR!</code> "Formula parse error"; expected computed "Widget Gadget". Root cause = test-case bug: Google Sheets requires DOUBLE quotes for string literals. USER_ENTERED mode itself IS confirmed (userEnteredValue.formulaValue stored, not stringValue); re-ran with corrected <code>=A2&amp;" "&amp;A3</code> → E2 = "Widget Gadget". Recommend fixing the test prompt to use double quotes</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w03-range-smaller-than-data-provided">TC-W03: Range smaller than data provided<a class="headerlink" href="#tc-w03-range-smaller-than-data-provided" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> Exercises <code>update_cells</code>' plain-only fast path (<code>values().update()</code>, issue #757) — the same call site TC-W05 covers, via an oversized <code>data</code> array instead of an invalid <code>sheet</code> name. Same fix (<code>try/except HttpError</code>, now <code>_execute_or_error</code>) applies; the dated Result below predates the fix and shows the pre-fix raw-<code>HttpError</code> behavior.</p>
@@ -2044,6 +2048,8 @@ Prompt formula <code>=A2&amp;' '&amp;A3</code> (single-quote string delims) → 
 - 🔍 <strong>Product decision:</strong> should the tool pre-truncate the data to fit the range instead of letting the API error?</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 4 values into A8:A9 → HttpError 400 "tried writing to row [10]"; no partial write. Tool passes to API rather than pre-truncating</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w04-cache-invalidated-after-write">TC-W04: Cache invalidated after write<a class="headerlink" href="#tc-w04-cache-invalidated-after-write" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong> (run TC-R16 or TC-R17 first to warm the cache, then run this)</p>
@@ -2055,6 +2061,8 @@ Prompt formula <code>=A2&amp;' '&amp;A3</code> (single-quote string delims) → 
 - Confirms <code>sheet_data_cache.mark_dirty</code> fired after the write</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 A7→"CacheTest" then summary shows "CacheTest" in first_rows — cache invalidated</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w05-non-existent-sheet-name">TC-W05: Non-existent sheet name<a class="headerlink" href="#tc-w05-non-existent-sheet-name" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> The 2026-09-04 result below found <code>update_cells</code>' plain-only branch leaked a raw <code>HttpError</code> instead of the <code>{"error": ...}</code> shape every other validation failure in these tools returns — this is <code>update_cells</code>' own instance of issue #757 (no local validation on the raw range string handed to the plain-cells <code>values().update()</code> call). Fixed via <code>try/except HttpError</code> around that call — see TC-W41 for the sibling <code>clear_values</code> fix. The Checks below describe the post-fix expected behavior; the dated Result above predates the fix.</p>
@@ -2067,6 +2075,8 @@ A7→"CacheTest" then summary shows "CacheTest" in first_rows — cache invalida
 - Does not silently succeed or create the sheet</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 Sheet "NoSuchSheet" → HttpError 400 "Unable to parse range: NoSuchSheet!A1"; no silent success, no sheet created</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w33-partial-rich-text-hyperlink-in-a-single-cell-destructive">TC-W33: Partial (rich-text) hyperlink in a single cell ⚠️ destructive<a class="headerlink" href="#tc-w33-partial-rich-text-hyperlink-in-a-single-cell-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong>
@@ -2082,6 +2092,8 @@ Sheet "NoSuchSheet" → HttpError 400 "Unable to parse range: NoSuchSheet!A1"; n
 <p><strong>Result (2026-07-19) ✅</strong> — <code>get_sheet_data(include_grid_data=True)</code> on F2 confirmed <code>userEnteredValue.stringValue</code> = "See the docs", <code>textFormatRuns</code> = <code>[{"format":{}}, {"startIndex":4,"format":{"link":{"uri":"https://example.com"},...}}]</code>, <code>userEnteredFormat.hyperlinkDisplayType</code> = "LINKED". 🔍 Visual check blocked by the documented "Chart-covered grid (Sales sheet)" limitation (<code>docs/qa/run.md</code>) — a floating chart from earlier <code>add_chart</code> runs covers rows 1–22 including F2; API response used as the confirmation source per that doc's guidance instead.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 F2 stringValue "See the docs"; textFormatRuns [{format:{}}, {startIndex:4, link.uri "https://example.com"}]; hyperlinkDisplayType LINKED. Visual check blocked by documented Chart-covered-grid limitation → API used as confirmation source</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w34-mixed-plain-and-rich-text-cells-in-the-same-call-destructive">TC-W34: Mixed plain and rich-text cells in the same call ⚠️ destructive<a class="headerlink" href="#tc-w34-mixed-plain-and-rich-text-cells-in-the-same-call-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong>
@@ -2100,6 +2112,8 @@ F2 stringValue "See the docs"; textFormatRuns [{format:{}}, {startIndex:4, link.
 <p><strong>Result (2026-07-20, post-fix re-verification) ✅</strong> — Re-ran against c368ce1. Return value was <code>{"values_update": {"spreadsheetId":"...","totalUpdatedRows":1,"totalUpdatedColumns":1,"totalUpdatedCells":1,"totalUpdatedSheets":1,"responses":[{"updatedRange":"Sales!F3",...}]}, "rich_text_update": {"spreadsheetId":"...","replies":[{}]}}</code> — both results now present, confirming the fix. <code>get_sheet_data(include_grid_data=True)</code> on F3:G3 confirmed F3 <code>userEnteredValue.stringValue</code> = "PlainValue" and G3 <code>userEnteredValue.stringValue</code> = "Link" with <code>hyperlinkDisplayType: LINKED</code> and <code>hyperlink</code> = "https://example.com/g3" — both cells still correct with the new per-cell <code>values.batchUpdate</code> write path. 🔍 Visual check still blocked by the chart-pollution limitation.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 Return = {values_update:{...responses:[{updatedRange:"Sales!F3"}]}, rich_text_update:{...}} — both present; F3 "PlainValue"/PLAIN_TEXT via per-cell values.batchUpdate; G3 "Link"/LINKED, link.uri "https://example.com/g3". Visual blocked by chart pollution</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w35-rich-text-run-missing-text-key-returns-an-error">TC-W35: Rich-text run missing "text" key returns an error<a class="headerlink" href="#tc-w35-rich-text-run-missing-text-key-returns-an-error" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2112,6 +2126,8 @@ Return = {values_update:{...responses:[{updatedRange:"Sales!F3"}]}, rich_text_up
 <p><strong>Result (2026-07-19) ✅</strong> — Returned <code>{"error": "Rich-text cell runs must be dicts with a 'text' key, e.g. {'text': ..., 'hyperlink': ...}"}</code>. Follow-up <code>get_sheet_data</code> on F4 confirmed no write occurred (empty). Note: this test only covers a <em>missing</em> <code>text</code> key — it does not cover a <em>present-but-wrong-type</em> <code>text</code> value (e.g. <code>{"text": None, ...}</code> or <code>{"text": 123, ...}</code>), which code review found crashes with an unhandled <code>TypeError</code> instead of returning this same graceful error (see PR comment).</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 Run <code>{"hyperlink":...}</code> no text → {"error":"Rich-text cell runs must be dicts with a string 'text' key..."}; F4 not written (came back as empty cell entry)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w36-rich-text-run-offsets-after-an-astral-plane-character-emoji-destructive">TC-W36: Rich-text run offsets after an astral-plane character (emoji) ⚠️ destructive<a class="headerlink" href="#tc-w36-rich-text-run-offsets-after-an-astral-plane-character-emoji-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> Sheets API <code>TextFormatRun.startIndex</code> counts UTF-16 code units, not Python characters — an emoji outside the Basic Multilingual Plane is 2 units. A run offset computed with plain <code>len()</code> would land the hyperlink one character early.</p>
@@ -2126,6 +2142,8 @@ Run <code>{"hyperlink":...}</code> no text → {"error":"Rich-text cell runs mus
 <p><strong>Result (2026-07-19) ✅</strong> — <code>get_sheet_data(include_grid_data=True)</code> on F5 confirmed <code>userEnteredValue.stringValue</code> = "🚀link", <code>textFormatRuns[1].startIndex</code> = 2 (not 1) with <code>format.link.uri</code> = "https://example.com". <code>_utf16_len</code> correctly accounts for the emoji's UTF-16 surrogate pair. 🔍 Visual check blocked by the same chart-pollution limitation as TC-W33.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 F5 stringValue "🚀link"; textFormatRuns[1].startIndex = 2 (emoji = 2 UTF-16 units), not 1; link.uri present. Visual blocked by chart pollution</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w37-rich-text-run-with-a-wrong-typed-text-value-returns-an-error-not-a-crash">TC-W37: Rich-text run with a wrong-typed "text" value returns an error, not a crash<a class="headerlink" href="#tc-w37-rich-text-run-with-a-wrong-typed-text-value-returns-an-error-not-a-crash" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2138,6 +2156,8 @@ F5 stringValue "🚀link"; textFormatRuns[1].startIndex = 2 (emoji = 2 UTF-16 un
 <p><strong>Result (2026-07-20) ✅</strong> — Returned <code>{"error": "Rich-text cell runs must be dicts with a string 'text' key, e.g. {'text': ..., 'hyperlink': ...}"}</code>, no crash. Follow-up <code>get_sheet_data</code> on F6 confirmed no write occurred (absent from the response entirely, same as an untouched row).</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 <code>{"text": null,...}</code> → {"error":"...string 'text' key..."}; no crash; F6 untouched</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w38-empty-rich-text-run-list-returns-an-error-not-a-silent-blank">TC-W38: Empty rich-text run list returns an error, not a silent blank<a class="headerlink" href="#tc-w38-empty-rich-text-run-list-returns-an-error-not-a-silent-blank" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2150,6 +2170,8 @@ F5 stringValue "🚀link"; textFormatRuns[1].startIndex = 2 (emoji = 2 UTF-16 un
 <p><strong>Result (2026-07-20) ✅</strong> — Returned <code>{"error": "Rich-text cell runs list cannot be empty"}</code>. Follow-up <code>get_sheet_data</code> on F7 confirmed no write occurred.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 <code>[]</code> as cell value → {"error":"Rich-text cell runs list cannot be empty"}; F7 untouched</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w39-empty-data-returns-an-error-not-a-silent-no-op">TC-W39: Empty <code>data</code> returns an error, not a silent no-op<a class="headerlink" href="#tc-w39-empty-data-returns-an-error-not-a-silent-no-op" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2162,6 +2184,8 @@ F5 stringValue "🚀link"; textFormatRuns[1].startIndex = 2 (emoji = 2 UTF-16 un
 <p><strong>Result (2026-07-20) ✅</strong> — Returned <code>{"error": "data cannot be empty"}</code>. Follow-up <code>get_sheet_data</code> on F8 confirmed no write occurred.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 data=[] → {"error":"data cannot be empty"}; no write</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w40-invalid-a1-notation-range-returns-a-clean-error-not-a-raw-exception-issue-747">TC-W40: Invalid A1 notation range returns a clean error, not a raw exception (issue #747)<a class="headerlink" href="#tc-w40-invalid-a1-notation-range-returns-a-clean-error-not-a-raw-exception-issue-747" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2174,6 +2198,8 @@ data=[] → {"error":"data cannot be empty"}; no write</p>
 - Before this fix, <code>_parse_a1_notation</code>'s <code>ValueError</code> propagated uncaught through the async tool to the MCP client instead of this <code>{"error": ...}</code> shape
 - QA round 1 found <code>update_cells</code> parsed <code>range</code> twice (once in the mixed-cell branch, once again in the rich-text branch) whenever both cell kinds were present in the same call — harmless but redundant, since the first parse already returns on failure before the second is ever reached. Fixed by parsing once, up front, whenever <code>rich_text_cells</code> is non-empty (the exact condition under which either branch needs it), and reusing the result — <code>update_cells</code> now has exactly one <code>_parse_a1_notation_or_error</code> call site, not two.</p>
 <p><strong>Cleanup:</strong> none — no write occurred.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Error text now repr-quotes the range ('Sheet1!F9'); TC wording stale.</p>
 <hr />
 <h3 id="tc-w43-out-of-bounds-rich-text-index-returns-a-clean-error-not-a-raw-exception-issue-757">TC-W43: Out-of-bounds rich-text index returns a clean error, not a raw exception (issue #757)<a class="headerlink" href="#tc-w43-out-of-bounds-rich-text-index-returns-a-clean-error-not-a-raw-exception-issue-757" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> <code>_parse_a1_notation_or_error</code> (TC-W40) only validates A1 <em>syntax</em> — it can't know the sheet's real grid bounds. Unlike the values API (which auto-expands the grid on write), <code>updateCells</code>' <code>range</code> request field doesn't, so a syntactically-valid but out-of-bounds row/column still reaches the API raw. QA round 1 on PR #764 found this branch's <code>spreadsheets().batchUpdate()</code> call was left unwrapped.</p>
@@ -2186,6 +2212,8 @@ data=[] → {"error":"data cannot be empty"}; no write</p>
 - No values are written (F10000000 is well beyond the sheet's actual grid — adjust the row number upward if the fixture sheet's grid has been resized since this was written, the point is triggering the API's own out-of-bounds rejection)</p>
 <p><strong>Cleanup:</strong> none — no write occurred.</p>
 <p><strong>Result (2026-09-18) ✅ PASS</strong> — <code>update_cells(spreadsheet_id, sheet="Sales", range="F10000000", data=[[[{"text": "x"}]]])</code> returned <code>{"error": "&lt;HttpError 400 ... Range (Sales!F10000000) exceeds grid limits. Max rows: 996, max columns: 28 ...&gt;"}</code>, not a raw exception.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w44-mixed-call-one-branchs-httperror-doesnt-drop-the-other-branchs-result-issue-757-unit-test">TC-W44: Mixed call — one branch's HttpError doesn't drop the other branch's result (issue #757, unit test)<a class="headerlink" href="#tc-w44-mixed-call-one-branchs-httperror-doesnt-drop-the-other-branchs-result-issue-757-unit-test" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> A mixed call makes two independent API calls (issue #380's own design — neither result should be silently dropped if the other fails). QA round 1 on PR #764 flagged that a naive fix wrapping each branch (returning the failing branch's error immediately) would have violated that exact contract by dropping the <em>other</em> branch's already-successful result. Fixed by storing each branch's outcome under its own <code>values_update</code>/<code>rich_text_update</code> key instead of short-circuiting — the plain-cell batchUpdate and rich-text <code>updateCells</code> batchUpdate are now each independently caught, and the branch that follows still runs regardless of whether the one before it failed.</p>
@@ -2195,6 +2223,8 @@ data=[] → {"error":"data cannot be empty"}; no write</p>
 - Plain branch raises <code>HttpError</code> → the rich-text <code>spreadsheets().batchUpdate()</code> call is still made (not skipped) and its own success is preserved under <code>rich_text_update</code>; response is <code>{"values_update": {"error": ...}, "rich_text_update": &lt;rich-text success&gt;}</code>
 - Covered by <code>test_mixed_cells_rich_text_httperror_preserves_plain_success</code>, <code>test_mixed_cells_plain_httperror_still_attempts_rich_text</code> in <code>TestUpdateCells</code></p>
 <p><strong>Result (2026-09-18) ✅ PASS</strong> — <code>uv run python -m pytest tests/sheets/test_data.py -q</code>: both unit tests pass, confirming neither branch's result is dropped in either direction.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h2 id="batch_update_cells"><code>batch_update_cells</code><a class="headerlink" href="#batch_update_cells" title="Permanent link">&para;</a></h2>
 <h3 id="tc-w06-multiple-ranges-in-one-call">TC-W06: Multiple ranges in one call<a class="headerlink" href="#tc-w06-multiple-ranges-in-one-call" title="Permanent link">&para;</a></h3>
@@ -2207,6 +2237,8 @@ data=[] → {"error":"data cannot be empty"}; no write</p>
 - A8 = Batch1, A9 = Batch2</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 batch_update_cells A8=Batch1, A9=Batch2 in one op</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w07-ranges-on-the-same-sheet">TC-W07: Ranges on the same sheet<a class="headerlink" href="#tc-w07-ranges-on-the-same-sheet" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2218,6 +2250,8 @@ batch_update_cells A8=Batch1, A9=Batch2 in one op</p>
 - No conflict from writing multiple ranges to the same sheet</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 B8=999, C8=888 in one batch; no same-sheet conflict</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w08-empty-ranges-dict">TC-W08: Empty ranges dict<a class="headerlink" href="#tc-w08-empty-ranges-dict" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2229,6 +2263,8 @@ B8=999, C8=888 in one batch; no same-sheet conflict</p>
 - 🔍 <strong>Product decision:</strong> should an empty ranges dict be an error or a no-op?</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 Empty ranges {} → {"spreadsheetId":"..."} bare, no error, no values write (no-op)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w09-cache-invalidated-after-batch-write">TC-W09: Cache invalidated after batch write<a class="headerlink" href="#tc-w09-cache-invalidated-after-batch-write" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2240,6 +2276,8 @@ Empty ranges {} → {"spreadsheetId":"..."} bare, no error, no values write (no-
 - Confirms <code>sheet_data_cache.mark_dirty</code> is called for <code>batch_update_cells</code></p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 batch A8="dirty" then summary reflects "dirty" — mark_dirty fired</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <h3 id="tc-w10-trailing-empty-array-rows-are-normalized">TC-W10: Trailing empty-array rows are normalized<a class="headerlink" href="#tc-w10-trailing-empty-array-rows-are-normalized" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
 <blockquote>
@@ -2249,6 +2287,8 @@ batch A8="dirty" then summary reflects "dirty" — mark_dirty fired</p>
 - <code>updatedRange</code> in the response is <code>Sales!A8:B10</code>, not <code>Sales!A8:B8</code>
 - Rows A9 and A10 are cleared (blank) in the sheet
 - No duplicate row appended after the write</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w42-malformed-range-key-returns-a-clean-error-not-a-raw-exception-issue-757">TC-W42: Malformed range key returns a clean error, not a raw exception (issue #757)<a class="headerlink" href="#tc-w42-malformed-range-key-returns-a-clean-error-not-a-raw-exception-issue-757" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> QA round 1 on PR #764 found <code>batch_update_cells</code> had the identical unvalidated-raw-range-string gap as the rest of <code>data.py</code> — the ranges dict's own keys are handed straight to <code>values().batchUpdate()</code> with no local validation, left unwrapped by the PR's first pass since the issue's own list didn't name this tool explicitly.</p>
@@ -2261,6 +2301,8 @@ batch A8="dirty" then summary reflects "dirty" — mark_dirty fired</p>
 - No values are written (call fails before the API mutates anything)</p>
 <p><strong>Cleanup:</strong> none — no write occurred.</p>
 <p><strong>Result (2026-09-18) ✅ PASS</strong> — <code>batch_update_cells(spreadsheet_id, sheet="Sales", ranges={"!!!BadRange!!!": [["x"]]})</code> returned <code>{"error": "&lt;HttpError 400 ... Unable to parse range: Sales!!!!BadRange!!! ...&gt;"}</code>, not a raw exception.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h2 id="add_rows"><code>add_rows</code><a class="headerlink" href="#add_rows" title="Permanent link">&para;</a></h2>
 <h3 id="tc-w10-add-row-at-beginning-no-position-specified">TC-W10: Add row at beginning (no position specified)<a class="headerlink" href="#tc-w10-add-row-at-beginning-no-position-specified" title="Permanent link">&para;</a></h3>
@@ -2271,6 +2313,8 @@ batch A8="dirty" then summary reflects "dirty" — mark_dirty fired</p>
 <p><strong>Checks</strong>
 - New blank row appears above the current row 1 (headers pushed to row 2)
 - <code>inheritFromBefore=False</code> (inserting at index 0 — no row above to inherit from)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w11-add-row-at-explicit-position-destructive">TC-W11: Add row at explicit position ⚠️ destructive<a class="headerlink" href="#tc-w11-add-row-at-explicit-position-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2282,6 +2326,8 @@ batch A8="dirty" then summary reflects "dirty" — mark_dirty fired</p>
 - Existing rows 4–6 shifted down</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1 row start_row=3 → inserted, data shifted, formulas auto-adjusted; rowCount +1</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w12-start_row0-inheritfrombeforefalse">TC-W12: start_row=0 — inheritFromBefore=False<a class="headerlink" href="#tc-w12-start_row0-inheritfrombeforefalse" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2294,6 +2340,8 @@ add 1 row start_row=3 → inserted, data shifted, formulas auto-adjusted; rowCou
 - 🔍 <strong>Product decision:</strong> is <code>start_row=0</code> meaningfully different from <code>start_row=None</code>?</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1 row start_row=0 → inserted at top, same as no-position. inheritFromBefore request shape unit-level</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w13-start_row1-inheritfrombeforetrue">TC-W13: start_row=1 — inheritFromBefore=True<a class="headerlink" href="#tc-w13-start_row1-inheritfrombeforetrue" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2305,6 +2353,8 @@ add 1 row start_row=0 → inserted at top, same as no-position. inheritFromBefor
 - <code>inheritFromBefore=True</code> — new row inherits formatting from row above</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1 row start_row=1 → inserted at index 1; inheritFromBefore=True request shape unit-level (reply is {replies:[{}]})</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w14-add-multiple-rows-at-once">TC-W14: Add multiple rows at once<a class="headerlink" href="#tc-w14-add-multiple-rows-at-once" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2316,6 +2366,8 @@ add 1 row start_row=1 → inserted at index 1; inheritFromBefore=True request sh
 - Existing data unchanged</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 5 rows start_row=1004 (end) → rowCount 1004→1009; existing data unshifted</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w15-invalid-sheet-name">TC-W15: Invalid sheet name<a class="headerlink" href="#tc-w15-invalid-sheet-name" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2327,6 +2379,8 @@ add 5 rows start_row=1004 (end) → rowCount 1004→1009; existing data unshifte
 - Does not throw an unhandled exception</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add row to "NoSuchSheet" → {"error":"Sheet 'NoSuchSheet' not found"}, no API call, no exception</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w16-large-count-value">TC-W16: Large count value<a class="headerlink" href="#tc-w16-large-count-value" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2338,6 +2392,8 @@ add row to "NoSuchSheet" → {"error":"Sheet 'NoSuchSheet' not found"}, no API c
 - 🔍 <strong>Product decision:</strong> should the tool cap <code>count</code> to prevent accidental large inserts?</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1000 rows → succeeds, no cap enforced, no API-limit error. Tool does not cap count</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h2 id="add_columns"><code>add_columns</code><a class="headerlink" href="#add_columns" title="Permanent link">&para;</a></h2>
 <h3 id="tc-w17-add-column-at-beginning-no-position-specified">TC-W17: Add column at beginning (no position specified)<a class="headerlink" href="#tc-w17-add-column-at-beginning-no-position-specified" title="Permanent link">&para;</a></h3>
@@ -2350,6 +2406,8 @@ add 1000 rows → succeeds, no cap enforced, no API-limit error. Tool does not c
 - <code>inheritFromBefore=False</code></p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1 col, no position → blank col A; Product shifted to B</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w18-start_column0-inheritfrombeforefalse">TC-W18: start_column=0 — inheritFromBefore=False<a class="headerlink" href="#tc-w18-start_column0-inheritfrombeforefalse" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2361,6 +2419,8 @@ add 1 col, no position → blank col A; Product shifted to B</p>
 - <code>inheritFromBefore</code> is False</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1 col start_column=0 → inserted leftmost</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w19-start_column1-inheritfrombeforetrue">TC-W19: start_column=1 — inheritFromBefore=True<a class="headerlink" href="#tc-w19-start_column1-inheritfrombeforetrue" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2372,6 +2432,8 @@ add 1 col start_column=0 → inserted leftmost</p>
 - <code>inheritFromBefore=True</code></p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 1 col start_column=1 → inserted after A; inheritFromBefore request shape unit-level</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w20-add-multiple-columns">TC-W20: Add multiple columns<a class="headerlink" href="#tc-w20-add-multiple-columns" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2383,6 +2445,8 @@ add 1 col start_column=1 → inserted after A; inheritFromBefore request shape u
 - Existing columns shifted right</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 add 3 cols start_column=2 → 3 blank cols inserted, data shifted right (Product ended at col G after W17–W20)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h2 id="batch_update-raw-passthrough"><code>batch_update</code> (raw passthrough)<a class="headerlink" href="#batch_update-raw-passthrough" title="Permanent link">&para;</a></h2>
 <h3 id="tc-w21-add-a-sheet-via-raw-request">TC-W21: Add a sheet via raw request<a class="headerlink" href="#tc-w21-add-a-sheet-via-raw-request" title="Permanent link">&para;</a></h3>
@@ -2395,6 +2459,8 @@ add 3 cols start_column=2 → 3 blank cols inserted, data shifted right (Product
 - Response includes the new sheet's properties</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 raw addSheet "RawAdded" → created; reply has full properties (sheetId 914226533, title, index)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w22-rename-a-sheet-via-raw-request">TC-W22: Rename a sheet via raw request<a class="headerlink" href="#tc-w22-rename-a-sheet-via-raw-request" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2406,6 +2472,8 @@ raw addSheet "RawAdded" → created; reply has full properties (sheetId 91422653
 - <code>list_sheets</code> reflects the new name</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 raw updateSheetProperties rename Empty(sheetId 1225372232)→RawRenamed; list_sheets reflects it</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w23-insert-dimension-via-raw-request">TC-W23: Insert dimension via raw request<a class="headerlink" href="#tc-w23-insert-dimension-via-raw-request" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2417,6 +2485,8 @@ raw updateSheetProperties rename Empty(sheetId 1225372232)→RawRenamed; list_sh
 - Existing data shifts down</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 raw insertDimension 2 ROWS at index 1 in Sales → replies [{}]; data shifted down</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w24-delete-dimension-structure-cache-invalidated-destructive">TC-W24: Delete dimension — structure cache invalidated ⚠️ destructive<a class="headerlink" href="#tc-w24-delete-dimension-structure-cache-invalidated-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2429,6 +2499,8 @@ raw insertDimension 2 ROWS at index 1 in Sales → replies [{}]; data shifted do
 - Confirms the structure cache bug fix: both <code>cache.mark_dirty</code> and <code>sheet_data_cache.mark_dirty</code> are called</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 raw deleteDimension row 7 (ROWS 6:7) → replies [{}]; subsequent list_sheets returns current state (no stale cache)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w25-empty-requests-list">TC-W25: Empty requests list<a class="headerlink" href="#tc-w25-empty-requests-list" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2440,6 +2512,8 @@ raw deleteDimension row 7 (ROWS 6:7) → replies [{}]; subsequent list_sheets re
 - Does not call the Sheets API</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 requests=[] → {"error":"requests list cannot be empty"}, no API call</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w26-non-dict-item-in-requests">TC-W26: Non-dict item in requests<a class="headerlink" href="#tc-w26-non-dict-item-in-requests" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2451,6 +2525,8 @@ requests=[] → {"error":"requests list cannot be empty"}, no API call</p>
 - Does not forward the malformed request to the API</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 requests=["notadict"] → MCP pydantic schema validation error ("Input should be a valid dictionary"); not forwarded to API. Caught at schema layer, not tool body</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w27-invalid-request-structure">TC-W27: Invalid request structure<a class="headerlink" href="#tc-w27-invalid-request-structure" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2462,6 +2538,8 @@ requests=["notadict"] → MCP pydantic schema validation error ("Input should be
 - Error message is from the Sheets API (unknown request type)</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 requests=[{"unknownKey":{}}] → HttpError 400 from Sheets API "Unknown name 'unknownKey'"; propagates, no server crash</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w28-both-caches-marked-dirty">TC-W28: Both caches marked dirty<a class="headerlink" href="#tc-w28-both-caches-marked-dirty" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2474,6 +2552,8 @@ requests=[{"unknownKey":{}}] → HttpError 400 from Sheets API "Unknown name 'un
 - Confirms both <code>cache.mark_dirty</code> and <code>sheet_data_cache.mark_dirty</code> are called</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 raw addSheet "CacheCheck" then list_sheets includes it AND summary reflects it — both structure + data caches invalidated</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h2 id="clear_values"><code>clear_values</code><a class="headerlink" href="#clear_values" title="Permanent link">&para;</a></h2>
 <h3 id="tc-w29-clear-a-specific-range-destructive">TC-W29: Clear a specific range ⚠️ destructive<a class="headerlink" href="#tc-w29-clear-a-specific-range-destructive" title="Permanent link">&para;</a></h3>
@@ -2489,6 +2569,8 @@ raw addSheet "CacheCheck" then list_sheets includes it AND summary reflects it �
 <p><strong>Result (2026-06-21) ✅</strong> A1:C5 cleared. <code>get_sheet_data</code> confirmed columns A–C rows 1–5 empty; column D (Q3) and row 6 (Totals) untouched. SUM formulas recalculated to 0 for cleared columns.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 clear A1:C5 of Sales → A1:C5 empty; col D + row 6 untouched; B6/C6 SUM formulas recalc to 0, D6 still 705</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w30-clear-entire-sheet-destructive">TC-W30: Clear entire sheet ⚠️ destructive<a class="headerlink" href="#tc-w30-clear-entire-sheet-destructive" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2502,6 +2584,8 @@ clear A1:C5 of Sales → A1:C5 empty; col D + row 6 untouched; B6/C6 SUM formula
 <p><strong>Result (2026-06-21) ✅</strong> <code>clear_values</code> called with no range on Notes &amp; Misc. <code>get_sheet_data</code> returned <code>values: []</code>. No error field. <code>clearedRange: "'Notes &amp; Misc'!A1:Z1000"</code>.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 Full-sheet clear of 'Notes &amp; Misc' via explicit range A1:Z1000 (no-range form blocked by Claude Code's local auto-mode classifier — harness gate, not the MCP tool). clearedRange returned, no error, formatting preserved</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w31-clear-values-sheet-name-with-spaces">TC-W31: Clear values — sheet name with spaces<a class="headerlink" href="#tc-w31-clear-values-sheet-name-with-spaces" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2514,6 +2598,8 @@ Full-sheet clear of 'Notes &amp; Misc' via explicit range A1:Z1000 (no-range for
 <p><strong>Result (2026-06-21) ✅</strong> <code>clearedRange</code> in response was <code>'Notes &amp; Misc'!B2:D4</code> — single-quoting applied correctly. No error.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 clear B2:D4 of 'Notes &amp; Misc' → clearedRange "'Notes &amp; Misc'!B2:D4" (sheet name single-quoted correctly)</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w32-clear-non-existent-range-api-behaviour">TC-W32: Clear non-existent range — API behaviour<a class="headerlink" href="#tc-w32-clear-non-existent-range-api-behaviour" title="Permanent link">&para;</a></h3>
 <p><strong>Prompt</strong></p>
@@ -2525,6 +2611,8 @@ clear B2:D4 of 'Notes &amp; Misc' → clearedRange "'Notes &amp; Misc'!B2:D4" (s
 <p><strong>Result (2026-06-21) ✅</strong> Response: <code>{"clearedRange":"Sales!Z100:Z200"}</code> — API accepted the out-of-bounds range and returned it as-is with no error.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 clear Z100:Z200 of Sales → {"clearedRange":"Sales!Z100:Z200"} — out-of-bounds accepted, no error</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 <hr />
 <h3 id="tc-w41-malformed-range-returns-a-clean-error-not-a-raw-exception-issue-757">TC-W41: Malformed range returns a clean error, not a raw exception (issue #757)<a class="headerlink" href="#tc-w41-malformed-range-returns-a-clean-error-not-a-raw-exception-issue-757" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> <code>clear_values</code> had the same gap as TC-W05 — no local validation on the raw caller-supplied <code>range</code> string before handing it to <code>values().clear()</code>.</p>
@@ -2537,6 +2625,8 @@ clear Z100:Z200 of Sales → {"clearedRange":"Sales!Z100:Z200"} — out-of-bound
 - No values are cleared (call fails before the API mutates anything)</p>
 <p><strong>Cleanup:</strong> none — no write occurred.</p>
 <p><strong>Result (2026-09-18) ✅ PASS</strong> — <code>clear_values(spreadsheet_id, sheet="Sales", range="!!!BadRange!!!")</code> returned <code>{"error": "&lt;HttpError 400 ... Unable to parse range: Sales!!!!BadRange!!! ...&gt;"}</code>, not a raw exception.</p>
+<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
+Run 2 (kai-oauth): every check matched; no classifier denials or timeouts.</p>
 
 
 
