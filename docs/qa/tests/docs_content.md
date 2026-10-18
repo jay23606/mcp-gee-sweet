@@ -5339,3 +5339,25 @@ Step 1: no `error`, no `backupId`. Step 2: all three tables with their text. Pla
 
 **Result (2026-10-18) ✅ PASS — PR #1082 QA round 2 (Kit)**
 Step 1: no `error`, no `backupId`. Step 2: all four tables with their text. Playwright: second table Narrow:Wide 1:2; third table narrower than the page; fourth table (three `<col>`, two cells) has two equal columns narrower than the page, so the extra width was skipped instead of failing with "Invalid column index 2" as in round 1; first table evenly distributed.
+
+---
+
+### TC-DOC228: A soft break in prose exports as `<br>`, not a raw `\v` ⚠️ destructive
+**Purpose:** Regression test for #1057. `get_doc_as_markdown` turned a soft break (`"\v"`) back into a line break only in Courier New runs, so a soft-break paragraph from `insert_softbreak_paragraph` exported a literal U+000B in normal text. It must export as a `<br>` hard break, in a paragraph and a heading alike, and a line that looks like Markdown syntax must stay inside the paragraph.
+
+**Setup:** `write_doc_content(doc_id="{DOC_ID}", content="<p>anchor one</p><p>anchor two</p>")`
+
+**Steps**
+1. `insert_softbreak_paragraph(doc_id="{DOC_ID}", index=1, lines=[{"text": "first", "bold": true}, {"text": "# not a heading"}, {"text": "linked", "link_url": "https://example.com"}, {"text": "tail: "}])`
+2. `find_in_doc(doc_id="{DOC_ID}", query="anchor two")`, note the match's start index as `{N}`
+3. `insert_softbreak_paragraph(doc_id="{DOC_ID}", index={N}, lines=[{"text": "Heading line"}, {"text": "subtitle: "}], named_style_type="HEADING_2")`
+4. `get_doc_as_markdown(doc_id="{DOC_ID}", local_path="/tmp/tc-doc228.md")`
+5. `uv run python -c "from markdown_it import MarkdownIt; print(MarkdownIt('commonmark').render(open('/tmp/tc-doc228.md').read()))"`
+6. `uv run python -c "print('\x0b' in open('/tmp/tc-doc228.md').read())"`
+
+**Checks**
+- Step 6 prints `False`: no raw vertical tab anywhere in the export
+- Step 5's HTML has `<p><strong>first</strong><br /># not a heading<br /><a href="https://example.com">linked</a><br />tail: anchor one</p>`: one paragraph, no `<h1>`, and the `<br />` on each side of the link sits outside the `<a>`
+- Step 5's HTML has `<h2>Heading line<br />subtitle: anchor two</h2>`
+
+**Cleanup:** write fixture content back, `rm /tmp/tc-doc228.md`

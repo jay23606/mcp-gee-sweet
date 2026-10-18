@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import re
 import string
+from dataclasses import replace
 
 from .ast import BulletItem, Cell, DocNode, Heading, Image, NamedBlock, Paragraph, Run, Table
 from .emitter import _build_phantom_set
@@ -305,13 +306,24 @@ def _coalesce_code_runs(items: list) -> list:
 
 def _render_run(run: Run, in_table: bool = False) -> str:
     """Markdown for one run. `in_table` makes the result safe inside a
-    pipe-table cell (see `_table_safe`)."""
+    pipe-table cell (see `_table_safe`).
+
+    A line break inside a run (a Docs soft break, #1057) renders as <br>, as
+    in a code run or a table cell. A raw newline would be a Markdown soft
+    break, which joins the lines, and could start a new block mid-paragraph;
+    a trailing backslash would end an ATX heading or a list item's line.
+    Line breaks at either end go outside the link, as in `_render_code_run`."""
     if run.text == "":
         return ""
     if run.font_family == "Courier New":
         return _render_code_run(run, in_table)
-    body = _render_plain_run(run)
-    return _table_safe(body) if in_table else body
+    body = run.text
+    inner = body.strip("\n")
+    if inner:
+        lead = body[: len(body) - len(body.lstrip("\n"))]
+        trail = body[len(body.rstrip("\n")) :]
+        body = f"{lead}{_render_plain_run(replace(run, text=inner))}{trail}"
+    return _table_safe(body) if in_table else body.replace("\n", "<br>")
 
 
 def _render_code_run(run: Run, in_table: bool) -> str:

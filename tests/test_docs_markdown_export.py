@@ -150,13 +150,12 @@ class TestDocToAstParagraphs:
         run = document_to_ast(doc)[0].runs[0]
         assert run.text == "line1\nline2\nline3"
 
-    def test_non_code_run_leaves_soft_break_untouched(self):
-        # The "\v" -> "\n" reversal is scoped to Courier-New-styled runs only
-        # (the one place emitter.py ever writes it) — an unrelated soft break
-        # from insert_softbreak_paragraph must not be touched by this fix.
-        doc = {"body": {"content": [_para("line1\vline2\n")]}}
+    def test_non_code_run_converts_soft_break_to_newline(self):
+        # #1057: a soft break in prose (insert_softbreak_paragraph) is a line
+        # break too, not a raw "\v" in the exported text.
+        doc = {"body": {"content": [_para("line1\vline2\v\n")]}}
         run = document_to_ast(doc)[0].runs[0]
-        assert run.text == "line1\vline2"
+        assert run.text == "line1\nline2\n"
 
 
 class TestDocToAstBullets:
@@ -1539,6 +1538,69 @@ class TestPlainTextEscapingCommonMark:
         assert _COMMONMARK.render(rendered) == (
             f'<p>a <a href="{url}"><code>x</code></a><br>b</p>\n'
         )
+
+
+class TestSoftBreakCommonMark:
+    """#1057: a soft break in non-code text exports as a <br> hard break, in
+    every block type, never as a raw "\\v" or a newline that joins the lines."""
+
+    def _html(self, nodes):
+        rendered = ast_to_markdown(nodes)
+        assert "\v" not in rendered
+        return _COMMONMARK.render(rendered)
+
+    def test_paragraph_from_live_doc_shape(self):
+        doc = {"body": {"content": [_para("first\vsecond\vthird\n")]}}
+        rendered = ast_to_markdown(document_to_ast(doc))
+        assert rendered == "first<br>second<br>third\n"
+        assert _COMMONMARK.render(rendered) == "<p>first<br>second<br>third</p>\n"
+
+    def test_line_that_looks_like_a_block_stays_in_the_paragraph(self):
+        html = self._html([Paragraph(runs=[Run(text="intro\n# not a heading\n- not a list")])])
+        assert html == "<p>intro<br># not a heading<br>- not a list</p>\n"
+
+    def test_heading_and_bullet_keep_their_line(self):
+        nodes = [
+            Heading(level=2, runs=[Run(text="Title\nsubtitle")]),
+            BulletItem(runs=[Run(text="item\nmore")], ordered=False, depth=0),
+        ]
+        assert self._html(nodes) == (
+            "<h2>Title<br>subtitle</h2>\n<ul>\n<li>item<br>more</li>\n</ul>\n"
+        )
+
+    def test_blockquote(self):
+        html = self._html([Paragraph(runs=[Run(text="a\nb")], blockquote_depth=1)])
+        assert html == "<blockquote>\n<p>a<br>b</p>\n</blockquote>\n"
+
+    def test_emphasis_closes_around_edge_breaks(self):
+        nodes = [Paragraph(runs=[Run(text="\nbold\n", bold=True), Run(text="x")])]
+        assert self._html(nodes) == "<p><br><strong>bold</strong><br>x</p>\n"
+
+    def test_emphasis_spans_an_inner_break(self):
+        nodes = [Paragraph(runs=[Run(text="one\ntwo", italic=True)])]
+        assert self._html(nodes) == "<p><em>one<br>two</em></p>\n"
+
+    def test_edge_breaks_land_outside_the_link(self):
+        url = "https://e.example"
+        nodes = [Paragraph(runs=[Run(text="a"), Run(text="\nlink\n", link_url=url), Run(text="b")])]
+        rendered = ast_to_markdown(nodes)
+        assert rendered == f"a<br>[link]({url})<br>b\n"
+        assert _COMMONMARK.render(rendered) == f'<p>a<br><a href="{url}">link</a><br>b</p>\n'
+
+    def test_break_only_run(self):
+        nodes = [Paragraph(runs=[Run(text="a"), Run(text="\n", bold=True), Run(text="b")])]
+        assert self._html(nodes) == "<p>a<br>b</p>\n"
+
+    def test_table_cell(self):
+        doc_cell = {"content": [_para("x\vy\n")]}
+        doc = {"body": {"content": [{"table": {"tableRows": [{"tableCells": [doc_cell]}]}}]}}
+        rendered = ast_to_markdown(document_to_ast(doc))
+        assert rendered == "| x<br>y |\n| --- |\n"
+
+    def test_markup_next_to_a_break_stays_literal(self):
+        text = "a <\nb> &\namp; c"
+        html = self._html([Paragraph(runs=[Run(text=text)])])
+        assert html == "<p>a &lt;<br>b&gt; &amp;<br>amp; c</p>\n"
 
 
 class TestBangBeforeLinkCommonMark:
