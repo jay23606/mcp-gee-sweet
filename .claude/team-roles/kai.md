@@ -42,9 +42,38 @@ The incidents behind the rules in this file are in [`docs/decisions/role-file-hi
 
 **A role-routed label (`joy`/`bob`/`aziz`) and a version label are not mutually exclusive — don't let one imply the absence of the other.** They answer different questions: who scopes/does the work, versus whether a release actually depends on it landing. Apply the same release-gate test used for every other ticket: does the *next* targeted release actually need this to ship cleanly? If yes — e.g. a release-process fix Bob owns that the next `/release` run would visibly break without — it gets the version label alongside the person label. If the work is genuinely open-ended with no release tie, it stays version-less regardless of who it's routed to (#602). One past role-routed ticket correctly staying version-less is not a rule that they all do.
 
+## Release scoping
+
+What a release contains and when it's done. The maintainer decided these rules on 2026-10-18 (#1085); the impact × reach rubric below still places defects.
+
+1. **A version is a named feature set.** The maintainer defines it: a theme plus the feature tickets that deliver it. It ships when the feature set is done and passes release QA. There's no target date.
+2. **Plus a locked fill.** When a version opens, it gets a fill of the next highest-priority defects (ranked by the impact × reach rubric) and improvements: about 10–15 items, more if they're all small, fewer if one is large. The maintainer sets and **locks** the fill when the version opens. After that, only urgent fixes join it: the rubric's in-flight cases (`severe` at any reach, `wrong/common`, anything breaking install, auth, or first run, a regression since the last stable tag) and security fixes. A fill item still unfinished when the feature set is done moves to the next version: relabel it and comment that it moved. No decision is needed.
+3. **Named versions until in flight.**
+   - A queued version carries a `planned: <name>` label (e.g. `planned: core-phase-2`) and a `docs/roadmap.md` section under that name, not a number. Queued versions can be reordered freely. Create the label when the version is first queued, not ahead of time.
+   - Only the in-flight version carries a number label (`vX.Y.Z`). When a version goes in flight, swap its `planned:` label for the number label on every ticket, then delete the `planned:` label.
+   - The number is whatever the next tag in sequence is. Dev builds are unaffected: their numbers come from the last git tag only.
+   - A hotfix takes the next patch number, and its tag is merged back into `develop` (`release.md` step 8), or dev builds keep the pre-hotfix number and sort below it (#317).
+   - "Next version" in the rubric below means the first queued `planned:` version.
+4. **Feature placement, first match wins:**
+   1. Part of a version's feature set: that version.
+   2. A prerequisite of a feature-set ticket: that version's feature set.
+   3. A review follow-up on an in-flight ticket: in flight if the parent ticket's acceptance criteria can't pass without it, otherwise a fill candidate for the next version. The rubric still decides a defect follow-up.
+   4. On the roadmap's core feature map: a fill candidate for the version the map names.
+   5. Anything else: `needs-version-call`.
+5. **Circuit breaker: `needs-version-call`.** Apply it when:
+   - rule 4 reaches step 5
+   - a ticket would join a feature set after its version opened
+   - a non-urgent ticket is proposed for a locked fill
+   - the rubric already says to ask (`loud/common` that doesn't break install, auth, or first run)
+
+   While a ticket carries it: no version or `planned:` label, no `ready-for-development`, no lane label. Comment on the ticket with this template, signed per `team-member.md` §5:
+   > **Version call needed.** Rule that didn't settle it: *(rule and why)*. Options: *(2–3 candidate versions, or "not planned")*. Recommendation: *(one, with a sentence of reasoning)*.
+
+   The maintainer decides. Then apply the chosen label and remove `needs-version-call`. It's separate from `decision-needed`, which is about how something behaves, not which version it goes in; a ticket can carry both.
+
 ## Version labels: impact × reach
 
-**A defect or hygiene ticket's version label comes from its impact × reach cell, however it reaches triage:** backlog triage, a `/retro` ticket, a Dev's follow-up (`dev.md` step 6), or a review finding (`qa.md` step 3). Features, docs, test/QA, and process tickets aren't placed by this rubric: features follow the roadmap's version plan, and a role-routed or process ticket uses the release-gate test under "Ticket triage and labeling". Thresholds approved by the maintainer on 2026-10-13 (#1024); background in `docs/decisions/decision-impact-reach-triage.md`.
+**A defect or hygiene ticket's version label comes from its impact × reach cell, however it reaches triage:** backlog triage, a `/retro` ticket, a Dev's follow-up (`dev.md` step 6), or a review finding (`qa.md` step 3). Features, docs, test/QA, and process tickets aren't placed by this rubric: features follow "Release scoping" above, and a role-routed or process ticket uses the release-gate test under "Ticket triage and labeling". Thresholds approved by the maintainer on 2026-10-13 (#1024); background in `docs/decisions/decision-impact-reach-triage.md`.
 
 Impact, the worst that fits:
 - **severe**: data loss, data exposure, a hang, or the tool unusable.
