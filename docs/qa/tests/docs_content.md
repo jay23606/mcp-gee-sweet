@@ -3305,6 +3305,9 @@ Wrote HTML blockquote+plain paragraph. Text order "A quoted line"/"Not quoted" c
 **Result (2026-10-17) 🟡 PARTIAL — v0.9.2 release pass**
 Export shows the blockquote markers, but the indent isn't visible on single-line quotes (indentFirstLine not set).
 
+**Result (2026-10-18) ✅ PASS — PR #1089 QA round 1 (Kit) @ 13f4274**
+Run on a scratch doc in the Shared Drive QA folder instead of the fixture. The call returned no error, and the text order was "A quoted line" then "Not quoted". In the raw read, "A quoted line" had `indentStart` 36 and `indentFirstLine` 36, plus a `borderLeft` (gray, 3pt, solid). "Not quoted" had none of the three keys.
+
 ---
 
 ### TC-DOC159: Nested blockquote doubles the indent; both levels get the same border ⚠️ destructive
@@ -3330,6 +3333,9 @@ Live re-verification blocked by an OAuth token refresh failure (invalid_grant on
 **Result (2026-10-17) 🟡 PARTIAL — v0.9.2 release pass**
 Export shows the blockquote markers, but the indent isn't visible on single-line quotes (indentFirstLine not set).
 
+**Result (2026-10-18) ✅ PASS — PR #1089 QA round 1 (Kit) @ 13f4274**
+Run on a scratch doc in the Shared Drive QA folder instead of the fixture. The call returned no error, and the text order was "outer" then "nested". In the raw read, "outer" had (`indentStart`, `indentFirstLine`) of (36, 36) and "nested" had (72, 72). Both had an identical `borderLeft` (gray, 3pt, solid, 8pt padding).
+
 ---
 
 ### TC-DOC160: Blockquote wrapping a bulleted list still tags each item — text and list membership survive alongside the blockquote's own indent/border ⚠️ destructive
@@ -3353,6 +3359,9 @@ Wrote blockquote-wrapped bulleted list markdown. get_doc_structure: both items l
 
 **Result (2026-10-17) ✅ PASS — v0.9.2 release pass**
 Run 2 (ash).
+
+**Result (2026-10-18) ✅ PASS — PR #1089 QA round 1 (Kit) @ 13f4274**
+Run on a scratch doc in the Shared Drive QA folder instead of the fixture. The call returned no error. Both items are list paragraphs with the same `listId`, text exactly "Quoted item one" / "Quoted item two", nestingLevel 0. In the raw read, both had `indentStart` 72, `indentFirstLine` 54, and a `borderLeft`.
 
 ---
 
@@ -5359,3 +5368,6 @@ Step 1: no `error`, no `backupId`. Step 2: all four tables with their text. Play
 - 🔍 Playwright: each quoted item's glyph sits visibly to the right of the unquoted item at the same level ("Quoted item one" right of "plain", "Quoted nested" right of "plain nested"), with the gray bar to the left of the quoted glyphs
 
 **Cleanup:** write fixture content back
+
+**Result (2026-10-18) ✅ PASS — PR #1089 QA round 1 (Kit) @ 13f4274**
+Run on a scratch doc in the Shared Drive QA folder instead of the fixture. Step 1 returned no `error`. In the raw read, (`indentFirstLine`, `indentStart`) were: "plain" (18, 36) and "plain nested" (54, 72), neither with a `borderLeft`; "Quoted item one" and "Quoted item two" (54, 72), "Quoted nested" (90, 108), and "Quoted numbered" (54, 72), each with a `borderLeft`. Step 2 output had `> - Quoted item one`, `>   - Quoted nested`, `> - Quoted item two`, and `> 1. Quoted numbered`, each with exactly one `>`, and the plain items had none. Playwright: "Quoted item one" sits to the right of "plain" and "Quoted nested" to the right of "plain nested", with the gray bar to the left of each quoted glyph. Observed, not a defect: Docs draws `borderLeft` at each paragraph's own indent, so the nested item's bar steps right instead of continuing the quote's bar. The same happened before #1056, because list levels already differed in indent.
