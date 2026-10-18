@@ -20,7 +20,11 @@ Cut a stable release: merge `develop` → `main`, tag, publish to PyPI via a Git
    - **Re-run step 1's README check against `origin/main`, before tagging** (`<ref>` = `origin/main`). It must exit 0. On a nonzero exit, stop: don't tag. Report the listed URLs to the user, since fixing them takes a PR to `develop` and a new `develop` → `main` merge.
    - `git tag vX.Y.Z origin/main`
    - `git push origin vX.Y.Z`
-5. **Create the GitHub Release from that tag** — `gh release create vX.Y.Z --title vX.Y.Z --generate-notes` (target `main`). This is what fires `.github/workflows/release.yml`'s `pypi-publish` job.
+5. **Write the release notes, then create the GitHub Release from that tag.** The auto-generated PR list alone isn't release notes: write a short header in a scratch file first, and show it to the user before creating the release.
+   - **Title:** `vX.Y.Z — <Name>`, using the version's dinosaur name from `kai.md` §"Release scoping" (e.g. `v0.9.4 — Ankylosaurus`). A hotfix has no name: title it `vX.Y.Z — hotfix`.
+   - **The dinosaur:** a synopsis of 3–5 sentences. Say when and where it lived, what it looked like and what it's known for, and one line on why it fits this release's theme. Use only well-established facts: no speculative behavior stated as fact, no contested size figures. Skip this for a hotfix.
+   - **What's in it:** the theme and the feature set, a few bullets in user terms with issue links; the fill in one or two lines; then a **Breaking and behavior changes** list (a renamed tool, a changed default, a removed parameter). Write "None" if there are none, never omit the heading.
+   - Create it: `gh release create vX.Y.Z --title "vX.Y.Z — <Name>" --notes-file <file> --generate-notes` (target `main`). With both flags, gh prepends your file to the generated PR list. This is what fires `.github/workflows/release.yml`'s `pypi-publish` job.
 6. **Verify the stable PyPI publish.**
    - `gh run list --workflow=release.yml --limit 1` and watch it to completion.
    - If it fails with `invalid-pending-publisher`: the PyPI trusted-publisher registration reverts to "pending" state once a project already has a publisher on file — tell the user to add `release.yml` as a *current* publisher on the PyPI project's Publishing page (not re-add as pending), then `gh run rerun <run-id> --failed`.
