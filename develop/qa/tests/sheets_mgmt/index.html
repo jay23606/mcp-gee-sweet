@@ -3859,8 +3859,9 @@ Run 2 (kai-oauth): every check matched; visual cases checked under the Playwrigh
 - Row 5 collapses to a thin line in the Sheets UI with a show-row chevron</p>
 <p><strong>Result (2026-07-14) ✅ PASS</strong>
 <code>hide_rows(spreadsheet_id, sheet="Sales", start_row=4)</code> → <code>{"replies":[{}]}</code>. Playwright screenshot confirmed row headers skip from 4 straight to 6 with expand chevrons at the boundary.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-hide_rows(start_row=4) → rowMetadata[4].hiddenByUser=true (API-verified, no Playwright per shard instructions)</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+hide_rows(start_row=4) → rowMetadata[4].hiddenByUser=true (API-verified, no Playwright per shard instructions)
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (API-only per shard instructions).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (kai-oauth): every check matched; visual cases checked under the Playwright mutex.</p>
 <hr />
@@ -4560,9 +4561,11 @@ Error text now repr-quotes the range; TC wording stale.</p>
 - <code>range</code> covers A1:A5
 - Selecting a cell in A1:A5 in the Sheets UI shows a dropdown arrow with exactly those three options
 - Calling <code>get_data_validation(range="A1:A5")</code> afterward returns one <code>{cell, rule}</code> entry per cell in the range, each with <code>condition.type == "ONE_OF_LIST"</code> and the same three values</p>
-<p><strong>Result (2026-07-17) ✅ PASS (direct tool call, not Playwright UI)</strong> — ran against a scratch range on the fixture's <code>Empty</code> sheet rather than <code>Sales</code>, but the tool logic is sheet-agnostic. <code>add_data_validation(condition_type="ONE_OF_LIST", values=["Yes","No","Maybe"])</code> succeeded; <code>get_data_validation</code> read back all 5 cells with <code>condition.type == "ONE_OF_LIST"</code> and the exact same 3 values. UI dropdown rendering not independently verified via Playwright this pass.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-add_data_validation(Empty!A1:A5, ONE_OF_LIST, [Yes,No,Maybe]) → succeeded; get_data_validation read back all 5 cells with matching condition.type/values (API-verified, not Playwright per shard instructions)</p>
+<p><strong>Result (2026-07-17) ⚠️ PARTIAL (direct tool call, not Playwright UI)</strong> — ran against a scratch range on the fixture's <code>Empty</code> sheet rather than <code>Sales</code>, but the tool logic is sheet-agnostic. <code>add_data_validation(condition_type="ONE_OF_LIST", values=["Yes","No","Maybe"])</code> succeeded; <code>get_data_validation</code> read back all 5 cells with <code>condition.type == "ONE_OF_LIST"</code> and the exact same 3 values. UI dropdown rendering not independently verified via Playwright this pass.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the dropdown rendering wasn't checked.</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+add_data_validation(Empty!A1:A5, ONE_OF_LIST, [Yes,No,Maybe]) → succeeded; get_data_validation read back all 5 cells with matching condition.type/values (API-verified, not Playwright per shard instructions)
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the dropdown rendering wasn't checked.</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run on the Empty sheet; dropdown/checkbox rendering seen, values confirmed via API read-back.</p>
 <hr />
@@ -4993,13 +4996,14 @@ Run 2 (kai-oauth): every check matched; visual cases checked under the Playwrigh
 - Invalid <code>"order"</code> enum value (e.g. <code>{"column_index": 0, "order": "banana"}</code>) → <code>{"error": ...}</code> from local validation, not a raw <code>HttpError</code> from the Sheets API.
 - In every case, no <code>batchUpdate</code> call is made.</p>
 <p>Matches <code>update_borders</code>'s validation depth (missing-key + isinstance + enum-membership) for the analogous <code>"style"</code> field (<code>structure.py</code>, <code>_VALID_BORDER_STYLES</code>) — this tool now applies the same pattern via <code>_VALID_SORT_ORDERS</code> for both <code>column_index</code> and <code>order</code>.</p>
-<p><strong>Result (2026-07-28) ⚠️ PASS (fix works) but same defect class left open on sibling fields.</strong> Live-verified against <code>mcp-gee-sweet-qa-fixtures</code> (<code>BrandNew</code> sheet), via <code>mcp-gee-sweet-sky</code>:
+<p><strong>Result (2026-07-28) ❌ FAIL (fix works) but same defect class left open on sibling fields.</strong> Live-verified against <code>mcp-gee-sweet-qa-fixtures</code> (<code>BrandNew</code> sheet), via <code>mcp-gee-sweet-sky</code>:
 - <code>sort_order=[{"column_index": 0, "order": 5}]</code> → clean <code>{"error": "Sort spec for column_index 0 has a non-string 'order' value"}</code>. This PR's own fix works as intended.
 - <code>sort_order=[{"order": "ASCENDING"}]</code> (column_index omitted) → raw <code>KeyError: 'column_index'</code> leaks as a tool execution error, not <code>{"error": ...}</code> — the same crash class this PR claims to fix, one field over. <code>column_index</code> is accessed via <code>s["column_index"]</code> (structure.py:1652) with no key-existence check, unlike <code>update_borders</code>'s analogous 3-part validation (missing-key + isinstance + enum) at lines 1129–1138 of the same file.
 - <code>sort_order=[{"column_index": "0", "order": "ASCENDING"}]</code> (string column_index) → raw <code>TypeError: unsupported operand type(s) for +: 'int' and 'str'</code> leaks (no type check on <code>column_index</code>).
 - <code>sort_order=[{"column_index": 0, "order": "banana"}]</code> (invalid enum value) → raw <code>HttpError 400</code> from the Sheets API leaks instead of a clean local error (pre-existing gap, not a new regression, but the same enum-membership check <code>update_borders</code> already has for <code>style</code>).
 - <code>sort_order=[{"column_index": 0, "order": "ASCENDING"}, "banana"]</code> (non-dict list element) — reviewed as a potential <code>AttributeError</code>, but live-tested and actually rejected upstream by MCP's own pydantic schema validation (<code>sort_order: list[dict]</code>) before the function body ever runs, so this path is not exploitable through the tool interface. Not a live defect, unlike the three above.
-- Sent back to Dev (see PR #452 comment) rather than approved — the fix is narrower than the established sibling pattern and leaves the identical crash class open on <code>column_index</code> and the <code>order</code> enum.</p>
+- Sent back to Dev (see PR #452 comment) rather than approved — the fix is narrower than the established sibling pattern and leaves the identical crash class open on <code>column_index</code> and the <code>order</code> enum.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the round was sent back for raw <code>KeyError</code>/<code>TypeError</code>/<code>HttpError</code> leaks in the same validation; fixed in round 2 (<code>5648a91</code>), re-confirmed 2026-09-04.</p>
 <p><strong>Result (2026-07-28, round 2) ✅ PASS — all findings closed.</strong> Fix commit <code>5648a91</code> adds missing-key + isinstance (with explicit <code>bool</code> exclusion) + enum-membership checks for both <code>column_index</code> and <code>order</code>, matching <code>update_borders</code>'s depth. Re-verified live against <code>mcp-gee-sweet-qa-fixtures</code> (<code>BrandNew</code> sheet), via <code>mcp-gee-sweet-sky</code>, after <code>/mcp reconnect</code>:
 - <code>sort_order=[{"order": "ASCENDING"}]</code> → <code>{"error": "Sort spec at index 0 is missing required 'column_index' key"}</code> — clean, no <code>KeyError</code>.
 - <code>sort_order=[{"column_index": "0", "order": "ASCENDING"}]</code> → <code>{"error": "Sort spec at index 0 has a non-integer 'column_index' value"}</code> — clean, no <code>TypeError</code>.
@@ -5089,7 +5093,8 @@ Run 2 (kai-oauth): every check matched; visual cases checked under the Playwrigh
 - TC-S133 calls 1–5, 7 → same <code>Invalid A1 notation</code> errors as round 1; <code>add_data_validation(range="A1:")</code> → <code>Invalid A1 notation: 'A1:'</code>; call 8 (control) → <code>HttpError 404</code> from the sheet lookup.
 - <strong>sheetId lands on the named tab, not sheet 0:</strong> on a temporary non-first tab (<code>sky-pr986-r2</code>, index 3, deleted afterward), <code>format_cells("B1:C2", bold)</code>, <code>merge_cells("E1:F2")</code>, <code>add_data_validation("H1:H3", ONE_OF_LIST)</code> and <code>update_borders("J1:J2", top SOLID)</code> each landed exactly there, and the <code>Sales</code> tab (sheet 0) showed no bold, merges, borders or validation. <code>unmerge_cells("E1:F2")</code> removed the merge; <code>clear_data_validation("H1:H2")</code> left only H3.
 - <strong><code>sort_range</code>'s rebuilt sort specs:</strong> <code>sort_range("B1:C4", [{"column_index": 1, "order": "DESCENDING"}])</code> sorted by column C (<code>dimensionIndex</code> = start column B + 1), giving c/4, a/3, d/2, b/1.
-- Side note (pre-existing, sent back to the Dev in round 2): <code>add_data_validation</code> with <code>condition_type="BLANK"</code> or <code>"NOT_BLANK"</code> reaches the API and fails with <code>HttpError 400 … ConditionType 'NOT_BLANK' is not supported in data validation</code>. TC-S133 step 6 still works because the range is rejected before the request is built.</p>
+- Side note (pre-existing, sent back to the Dev in round 2): <code>add_data_validation</code> with <code>condition_type="BLANK"</code> or <code>"NOT_BLANK"</code> reaches the API and fails with <code>HttpError 400 … ConditionType 'NOT_BLANK' is not supported in data validation</code>. TC-S133 step 6 still works because the range is rejected before the request is built.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> outcome of the BLANK/NOT_BLANK finding: round 3 (<code>44f9360</code>) removed both from the condition-type enum, and TC-S134 verifies the clean local error.</p>
 <p><strong>Result (2026-10-11, PR #986 round 3, <code>44f9360</code>) ✅ PASS.</strong> Live via <code>mcp-gee-sweet-sky</code> after <code>/mcp reconnect</code>:
 - 1–5, 7 → the same <code>Invalid A1 notation</code> errors as round 1, word for word.
 - 6 (now <code>DATE_IS_VALID</code>): the Kelvin sign again can't be sent through an agent's tool call, so it was checked in a fresh interpreter: <code>_parse_a1_notation("K1")</code> raises <code>Invalid A1 notation: 'K1'</code>. Live, <code>add_data_validation(range="A1:", condition_type="DATE_IS_VALID")</code> → <code>{"error":"Invalid A1 notation: 'A1:'"}</code>, so the new condition type passes the enum check and the range is still rejected before the sheet lookup.

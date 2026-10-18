@@ -1532,8 +1532,9 @@ Run 2 (sa) on a throwaway doc.</p>
 - Re-fetch <code>get_doc_structure</code> still reports 3 physical columns in row 0 (merge doesn't delete the covered cell, it only changes rendering)</p>
 <p><strong>Cleanup:</strong> delete the table</p>
 <p><strong>Result (2026-07-14) ✅ PASS</strong> Inserted a 2×3 table, called <code>merge_table_cells(table_start_index, row_index=0, column_index=0, row_span=1, column_span=2)</code>. Response matched exactly: <code>{"docId", "table_start_index", "row_index": 0, "column_index": 0, "row_span": 1, "column_span": 2}</code>. Playwright screenshot confirmed row 0's first two columns render as one wide cell while row 1 kept three separate cells. Re-fetched <code>get_doc_structure</code>: table still reported 3 physical columns in row 0 (cells at col 0, 1, 2 all present with distinct indices). Table deleted via <code>delete_doc_range</code>.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-merge_table_cells row0/col0 span 1x2 on 2x3 -&gt; response matches exactly; re-fetch row 0 still 3 physical cells (distinct indices). Visual 🔍 not verified (browser unauth).</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+merge_table_cells row0/col0 span 1x2 on 2x3 -&gt; response matches exactly; re-fetch row 0 still 3 physical cells (distinct indices). Visual 🔍 not verified (browser unauth).
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (browser not signed in).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <h3 id="tc-doc92-merge-a-vertical-range-of-cells-rowspan-destructive">TC-DOC92: Merge a vertical range of cells (rowspan) ⚠️ destructive<a class="headerlink" href="#tc-doc92-merge-a-vertical-range-of-cells-rowspan-destructive" title="Permanent link">&para;</a></h3>
@@ -1549,8 +1550,9 @@ Run 2 (sa) on a throwaway doc.</p>
 - 🔍 Visual check in Google Docs: column 0's first two rows render as one tall cell; column 1 is unaffected in both rows</p>
 <p><strong>Cleanup:</strong> delete the table</p>
 <p><strong>Result (2026-07-14) ✅ PASS</strong> Inserted a 3×2 table, called <code>merge_table_cells(table_start_index, row_index=0, column_index=0, row_span=2, column_span=1)</code>. Response matched exactly: <code>{"docId", "table_start_index", "row_index": 0, "column_index": 0, "row_span": 2, "column_span": 1}</code>. Playwright screenshot confirmed column 0's first two rows render as one tall cell while column 1 kept two separate cells across the same rows; row 2 unaffected. Table deleted via <code>delete_doc_range</code>.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-merge_table_cells row0/col0 span 2x1 on 3x2 -&gt; response matches exactly. Visual 🔍 not verified.</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+merge_table_cells row0/col0 span 2x1 on 3x2 -&gt; response matches exactly. Visual 🔍 not verified.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run.</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <h3 id="tc-doc93-api-error-returned-gracefully-merge-range-exceeds-table-bounds">TC-DOC93: API error returned gracefully (merge range exceeds table bounds)<a class="headerlink" href="#tc-doc93-api-error-returned-gracefully-merge-range-exceeds-table-bounds" title="Permanent link">&para;</a></h3>

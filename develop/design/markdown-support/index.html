@@ -1510,9 +1510,9 @@ another registered tool), passing <code>content_format</code> through to <code>_
 </tr>
 <tr>
 <td><code>~~strikethrough~~</code></td>
-<td><code>&lt;del&gt;</code></td>
-<td><code>Run(strikethrough=True)</code></td>
-<td>strikethrough</td>
+<td>none: stays literal text (<code>_md_to_html</code> loads no strikethrough extension, and <code>html_parser.py</code> maps <code>&lt;s&gt;</code>/<code>&lt;strike&gt;</code> but not <code>&lt;del&gt;</code>)</td>
+<td><code>Run</code> with the tildes in its text</td>
+<td>literal <code>~~strikethrough~~</code> — not implemented, #1077</td>
 </tr>
 <tr>
 <td><code>[text](url)</code></td>

@@ -2711,8 +2711,9 @@ No fixture setup needed — repeat the same tiny query (<code>{spreadsheet_id: {
 200 queries against the small <code>Sales</code> range (6 rows x 4 cols) raised: <code>get_multiple_sheet_data: the response is 150106 characters, over the 40000-character safety cap. Pass local_path to write the result to disk instead of returning it inline (bypasses this cap), or set MAX_TOOL_RESPONSE_CHARS if your MCP client can handle larger responses (e.g. a raised MAX_MCP_OUTPUT_TOKENS).</code> <code>local_path</code> with 2 queries succeeded, returned <code>{"local_path":"/tmp/qa_multiple_sheet_data_242.json","bytes_written":2048,"query_count":2}</code>; file verified on disk then cleaned up.</p>
 <p><strong>Result (2026-09-04) ✅ PASS</strong>
 local_path branch: 2 queries → {local_path, bytes_written 440, query_count 2}, file has full per-query results. Cap-trip check (200 queries → ValueError naming 40,000 cap) is stale: #519 raised default to 1,000,000, a ~150k-char 200-query response no longer trips it; cap mechanism itself verified via TC-R03c</p>
-<p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
-local_path part passes; the 200-query cap check is stale since #519 and was not run.</p>
+<p><strong>Result (2026-10-17) ⚠️ PARTIAL — v0.9.2 release pass</strong>
+local_path part passes; the 200-query cap check is stale since #519 and was not run.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the 200-query cap check wasn't run.</p>
 <hr />
 <h3 id="tc-r35-find_in_spreadsheet-max_results-bounds-count-not-size-issue-242">TC-R35: find_in_spreadsheet — max_results bounds count, not size (issue #242)<a class="headerlink" href="#tc-r35-find_in_spreadsheet-max_results-bounds-count-not-size-issue-242" title="Permanent link">&para;</a></h3>
 <p><strong>Background:</strong> <code>max_results</code> (default 50) caps how many matches are returned, not how large each matched cell value is. A handful of large matching cells can exceed the response-size cap even with few matches.</p>

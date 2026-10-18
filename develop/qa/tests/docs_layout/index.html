@@ -1367,8 +1367,9 @@
 - 🔍 Visual check in Google Docs: document shows a header section</p>
 <p><strong>Cleanup:</strong> none needed (headers persist; restore fixture doc if desired)</p>
 <p><strong>Result (2026-06-22) ✅ PASS</strong> Called <code>create_header(doc_id=fixture)</code> (no content). Returned <code>{"docId": ..., "headerId": "kix.xxxxxxxxxx"}</code>. Header section visible in Google Docs. Note: on first call after a prior session created the header (due to index=1 bug), the "already exists" 400 error was caught and the ID was retrieved from <code>documentStyle.defaultHeaderId</code> — this is the expected fallback path.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-create_header (no content) -&gt; {docId, headerId:"kix.4yrlc2k9cy3n"} non-empty; no error. Visual 🔍 not verified (browser unauth; headers also not visible in body snapshot per run.md limitation).</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+create_header (no content) -&gt; {docId, headerId:"kix.4yrlc2k9cy3n"} non-empty; no error. Visual 🔍 not verified (browser unauth; headers also not visible in body snapshot per run.md limitation).
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (browser not signed in).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <hr />
@@ -1384,8 +1385,9 @@ Run 2 (sa) on a throwaway doc.</p>
 - 🔍 Visual check: header text "Confidential — Internal Only" appears in the document header</p>
 <p><strong>Cleanup:</strong> none needed</p>
 <p><strong>Result (2026-06-22) ✅ PASS</strong> Called <code>create_header(doc_id=temp_doc, content="Confidential — Internal Only")</code>. Returned <code>{"docId": ..., "headerId": "kix.xxxxxxxxxx"}</code> with no <code>warning</code> key — both header creation (via <code>documentStyle</code> fallback) and content insertion at <code>index=0</code> succeeded.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-create_header content "Confidential — Internal Only" -&gt; {docId, headerId} (same id via documentStyle fallback since header already existed); no error/warning key. Visual 🔍 not verified.</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+create_header content "Confidential — Internal Only" -&gt; {docId, headerId} (same id via documentStyle fallback since header already existed); no error/warning key. Visual 🔍 not verified.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (browser not signed in).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <hr />
@@ -1400,8 +1402,9 @@ Run 2 (sa) on a throwaway doc.</p>
 - 🔍 Visual check: document shows a footer section</p>
 <p><strong>Cleanup:</strong> none needed</p>
 <p><strong>Result (2026-06-22) ✅ PASS</strong> Called <code>create_footer(doc_id=fixture)</code>. Returned <code>{"docId": ..., "footerId": "kix.xxxxxxxxxx"}</code>. Footer section visible in Google Docs.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-create_footer (no content) -&gt; {docId, footerId:"kix.khcu7s4gsbju"} non-empty; no error. Visual 🔍 not verified.</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+create_footer (no content) -&gt; {docId, footerId:"kix.khcu7s4gsbju"} non-empty; no error. Visual 🔍 not verified.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (browser not signed in).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <hr />
@@ -1416,8 +1419,9 @@ Run 2 (sa) on a throwaway doc.</p>
 - 🔍 Visual check: footer shows "Page 1"</p>
 <p><strong>Cleanup:</strong> none needed</p>
 <p><strong>Result (2026-06-22) ✅ PASS</strong> Called <code>create_footer(doc_id=temp_doc, content="Page 1")</code>. Returned <code>{"docId": ..., "footerId": "kix.xxxxxxxxxx"}</code> with no <code>warning</code> key — footer created and content inserted at <code>index=0</code>.</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-create_footer content "Page 1" -&gt; {docId, footerId}; no error/warning. Visual 🔍 not verified.</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+create_footer content "Page 1" -&gt; {docId, footerId}; no error/warning. Visual 🔍 not verified.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (browser not signed in).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <hr />
@@ -1460,8 +1464,9 @@ Run 2 (sa) on a throwaway doc.</p>
 - Response contains <code>insertions: 1</code>
 - 🔍 Visual check: "Header text via insert_doc_text" appears in the document header</p>
 <p><strong>Result (2026-06-22) ✅ PASS</strong> Called <code>insert_doc_text</code> with <code>[{index: 0, text: "QA Test Header", segment_id: "kix.xxxxxxxxxx"}]</code>. Response: <code>{"docId": ..., "insertions": 1}</code>. Text "QA Test Header" appeared in fixture doc header. Same mechanism also confirmed for footer segment insertion (segment_id: "kix.xxxxxxxxxx", text: "Page 1").</p>
-<p><strong>Result (2026-09-04) ✅ PASS</strong>
-insert_doc_text index 0, segment_id headerId -&gt; {docId, insertions:1}; no API error. Visual 🔍 not verified.</p>
+<p><strong>Result (2026-09-04) ⚠️ PARTIAL</strong>
+insert_doc_text index 0, segment_id headerId -&gt; {docId, insertions:1}; no API error. Visual 🔍 not verified.
+<strong>Corrected (2026-10-17, #1044 audit):</strong> the visual check wasn't run (browser not signed in).</p>
 <p><strong>Result (2026-10-17) ✅ PASS — v0.9.2 release pass</strong>
 Run 2 (sa) on a throwaway doc.</p>
 <hr />
