@@ -250,6 +250,43 @@ class TestDocToAstBlockquote:
         node = document_to_ast(doc)[0]
         assert node.blockquote_depth == 2
 
+    def _quoted_bullet_doc(self, indent_start, level=0, level_indent=None):
+        nesting = [{"glyphSymbol": "●"} for _ in range(level + 1)]
+        if level_indent is not None:
+            nesting[level]["indentStart"] = {"magnitude": level_indent}
+        return {
+            "body": {
+                "content": [
+                    _para(
+                        "item\n",
+                        bullet={"listId": "l1", "nestingLevel": level},
+                        para_style={
+                            "indentStart": {"magnitude": indent_start},
+                            "borderLeft": {"color": {}},
+                        },
+                    )
+                ]
+            },
+            "lists": {"l1": {"listProperties": {"nestingLevels": nesting}}},
+        }
+
+    def test_quoted_bullet_depth_excludes_list_level_indent(self):
+        """#1056: a quoted list item's indentStart is its list level's own plus the
+        quote's, so the level's share isn't quote depth."""
+        doc = self._quoted_bullet_doc(108, level=1, level_indent=72)
+        node = document_to_ast(doc)[0]
+        assert node.depth == 1
+        assert node.blockquote_depth == 1
+
+    def test_quoted_bullet_level_indent_falls_back_to_preset(self):
+        doc = self._quoted_bullet_doc(144)
+        assert document_to_ast(doc)[0].blockquote_depth == 3
+
+    def test_pre_1056_quoted_bullet_still_reads_as_quoted(self):
+        """Written before #1056, the bullets call left the level's own indent only."""
+        doc = self._quoted_bullet_doc(36, level_indent=36)
+        assert document_to_ast(doc)[0].blockquote_depth == 1
+
 
 class TestDocToAstLinks:
     """PR #976 QA round 1: Docs reports a same-document link by ID, with no

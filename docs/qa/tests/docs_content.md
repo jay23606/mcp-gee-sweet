@@ -3293,7 +3293,7 @@ Tool call: `write_doc_content(doc_id={DOC_ID}, content="<blockquote><p>A quoted 
 **Checks**
 - Call succeeds with no API error
 - `get_doc_structure` shows two paragraphs in order: "A quoted line" then "Not quoted"
-- Raw `documents().get()` read: the "A quoted line" paragraph's `paragraphStyle` has `indentStart.magnitude == 36` and a `borderLeft` present; the "Not quoted" paragraph's `paragraphStyle` has neither key
+- Raw `documents().get()` read: the "A quoted line" paragraph's `paragraphStyle` has `indentStart.magnitude == 36`, `indentFirstLine.magnitude == 36` (#1056), and a `borderLeft` present; the "Not quoted" paragraph's `paragraphStyle` has none of the three keys
 
 **Cleanup:** write fixture content back
 
@@ -3317,7 +3317,7 @@ Tool call: `write_doc_content(doc_id={DOC_ID}, content="> outer\n> > nested\n", 
 **Checks**
 - Call succeeds with no API error
 - `get_doc_structure` shows two paragraphs in order: "outer" then "nested"
-- Raw `documents().get()` read: "outer"'s `paragraphStyle.indentStart.magnitude == 36`; "nested"'s `paragraphStyle.indentStart.magnitude == 72`; both paragraphs have a `borderLeft` present with the same width and color
+- Raw `documents().get()` read: "outer"'s `paragraphStyle.indentStart.magnitude == 36`; "nested"'s `paragraphStyle.indentStart.magnitude == 72`; each paragraph's `indentFirstLine.magnitude` equals its own `indentStart.magnitude` (#1056); both paragraphs have a `borderLeft` present with the same width and color
 
 **Cleanup:** write fixture content back
 
@@ -3342,7 +3342,7 @@ Tool call: `write_doc_content(doc_id={DOC_ID}, content="> - Quoted item one\n> -
 **Checks**
 - Call succeeds with no API error
 - `get_doc_structure` shows both items as list paragraphs sharing one `listId`, with text exactly "Quoted item one" / "Quoted item two" (no leaked `>` or `-` markdown syntax)
-- Raw `documents().get()` read: both paragraphs' `paragraphStyle` have a `borderLeft` present
+- Raw `documents().get()` read: both paragraphs' `paragraphStyle` have a `borderLeft` present, `indentStart.magnitude == 72`, and `indentFirstLine.magnitude == 54`: the level-0 list indent (36/18) plus the 36pt quote indent (#1056; before it, the bullets call overwrote the quote indent and left 36/18)
 
 **Cleanup:** write fixture content back
 
@@ -5339,3 +5339,23 @@ Step 1: no `error`, no `backupId`. Step 2: all three tables with their text. Pla
 
 **Result (2026-10-18) ✅ PASS — PR #1082 QA round 2 (Kit)**
 Step 1: no `error`, no `backupId`. Step 2: all four tables with their text. Playwright: second table Narrow:Wide 1:2; third table narrower than the page; fourth table (three `<col>`, two cells) has two equal columns narrower than the page, so the extra width was skipped instead of failing with "Invalid column index 2" as in round 1; first table evenly distributed.
+
+---
+
+### TC-DOC228: Quoted nested and numbered lists keep both the list indent and the quote indent ⚠️ destructive
+**Purpose:** Regression test for #1056. `createParagraphBullets` overwrites a paragraph's `indentStart` and `indentFirstLine` with the list preset's, so the quote indent set before it was lost and a quoted list sat at the same indent as an unquoted one. The emitter now styles a quoted list item after its bullets call, at the list level's own indent plus 36pt per quote level. TC-DOC160 covers one level-0 bulleted run. This case adds a nested item, a numbered list, and an unquoted list that must stay at the preset's indents.
+
+**Prompt**
+**Playwright: required**
+1. `write_doc_content(doc_id="{DOC_ID}", content="- plain\n    - plain nested\n\nmid\n\n> - Quoted item one\n>     - Quoted nested\n> - Quoted item two\n\n> 1. Quoted numbered\n", content_format="markdown")`
+2. `get_doc_as_markdown(doc_id="{DOC_ID}")`
+
+**Checks**
+- Step 1 returns no `error` key
+- Raw `documents().get()` read, `paragraphStyle` per list paragraph as (`indentFirstLine`, `indentStart`) magnitudes:
+  - "plain" (18, 36) and "plain nested" (54, 72), with no `borderLeft`
+  - "Quoted item one" and "Quoted item two" (54, 72), "Quoted nested" (90, 108), "Quoted numbered" (54, 72), each with a `borderLeft`
+- Step 2's output has `> - Quoted item one`, `>   - Quoted nested`, `> - Quoted item two`, and `> 1. Quoted numbered`, each with exactly one `>`; "plain" and "plain nested" have none
+- 🔍 Playwright: each quoted item's glyph sits visibly to the right of the unquoted item at the same level ("Quoted item one" right of "plain", "Quoted nested" right of "plain nested"), with the gray bar to the left of the quoted glyphs
+
+**Cleanup:** write fixture content back

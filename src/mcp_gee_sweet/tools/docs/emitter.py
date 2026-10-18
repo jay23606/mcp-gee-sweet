@@ -349,7 +349,10 @@ def ast_to_requests(
             # regardless of node type (Heading/Paragraph/NamedBlock/BulletItem can all be
             # blockquote content) since Google Docs has no native blockquote paragraph
             # style to set instead — see docs/design/blockquote-representation.md.
-            if node.blockquote_depth > 0:
+            # A BulletItem's is deferred to the bullet grouping pass below:
+            # createParagraphBullets overwrites both paragraph indents with the list
+            # preset's own, so a quote indent set here was lost (#1056).
+            if node.blockquote_depth > 0 and not isinstance(node, BulletItem):
                 requests.append(_blockquote_style_request(rng, node.blockquote_depth))
 
             # Inline run styles for non-table content (bold, italic, links, font_family, etc.)
@@ -449,6 +452,24 @@ def ast_to_requests(
                 # clamping a deeply-nested fragment (whose ancestors were dropped for
                 # having no text of their own) to look one level deep.
                 run_requests = isolated_bullet_run_wrap_requests(run_start, run_end, preset)
+            # Blockquote styling for the run's quoted items (#1056) goes after its
+            # bullets call, which would otherwise overwrite the indents. By then each
+            # item has lost its own leading tabs and every earlier item's in this run;
+            # positions before run_start haven't moved (later runs only shift what
+            # follows them, and an isolated run's anchor insert/delete nets to zero).
+            run_tabs_before = segment_meta[i].tabs_through - node.depth
+            for seg in segment_meta[i:j]:
+                if seg.node.blockquote_depth > 0:
+                    shift = seg.tabs_through - seg.node.depth - run_tabs_before
+                    rng = {
+                        "startIndex": seg.doc_start - shift,
+                        "endIndex": seg.doc_end - shift - seg.node.depth,
+                    }
+                    run_requests.append(
+                        _blockquote_style_request(
+                            rng, seg.node.blockquote_depth, list_level=seg.node.depth
+                        )
+                    )
             bullet_run_requests.append((run_start, run_requests))
             i = j
 
@@ -516,21 +537,46 @@ _BLOCKQUOTE_BORDER = {
 }
 
 
-def _blockquote_style_request(rng: dict, depth: int) -> dict:
+# Paragraph indents createParagraphBullets gives a list item at nesting level n, for
+# both presets ast_to_requests uses (confirmed live, #1056): first line (glyph) at
+# 18 + 36n pt, wrapped text at 36 + 36n pt.
+_LIST_INDENT_PT_PER_LEVEL = 36
+_LIST_INDENT_START_PT = 36
+_LIST_INDENT_FIRST_LINE_PT = 18
+
+
+def list_level_indent_start(level: int) -> int:
+    """indentStart, in points, of a list item at nesting level `level` in the presets
+    ast_to_requests uses."""
+    return _LIST_INDENT_START_PT + _LIST_INDENT_PT_PER_LEVEL * level
+
+
+def _blockquote_style_request(rng: dict, depth: int, list_level: int | None = None) -> dict:
     """updateParagraphStyle request giving a blockquote paragraph a left border and an
     indent scaled by nesting depth — Google Docs has no native blockquote paragraph
-    style, so this is the closest visual equivalent the API's ParagraphStyle exposes."""
+    style, so this is the closest visual equivalent the API's ParagraphStyle exposes.
+
+    Both indents are set: indentFirstLine is absolute, not relative to indentStart, so
+    leaving it unset put a single-line quote's only line at the margin (#1056). A list
+    item (`list_level` given) keeps its glyph's hanging indent, shifted by the quote
+    indent; the request must run after the item's createParagraphBullets."""
+    quote_indent = _BLOCKQUOTE_INDENT_PT_PER_LEVEL * depth
+    if list_level is None:
+        start = first_line = quote_indent
+    else:
+        start = list_level_indent_start(list_level) + quote_indent
+        first_line = (
+            _LIST_INDENT_FIRST_LINE_PT + _LIST_INDENT_PT_PER_LEVEL * list_level + quote_indent
+        )
     return {
         "updateParagraphStyle": {
             "range": rng,
             "paragraphStyle": {
-                "indentStart": {
-                    "magnitude": _BLOCKQUOTE_INDENT_PT_PER_LEVEL * depth,
-                    "unit": "PT",
-                },
+                "indentStart": {"magnitude": start, "unit": "PT"},
+                "indentFirstLine": {"magnitude": first_line, "unit": "PT"},
                 "borderLeft": _BLOCKQUOTE_BORDER,
             },
-            "fields": "indentStart,borderLeft",
+            "fields": "indentStart,indentFirstLine,borderLeft",
         }
     }
 

@@ -25,7 +25,7 @@ from .ast import (
     Run,
     Table,
 )
-from .emitter import _BLOCKQUOTE_INDENT_PT_PER_LEVEL
+from .emitter import _BLOCKQUOTE_INDENT_PT_PER_LEVEL, list_level_indent_start
 from .indices import decode_code_run_text
 
 _HEADING_LEVELS = {f"HEADING_{i}": i for i in range(1, 7)}
@@ -57,9 +57,11 @@ def _paragraph_to_node(para: dict, document: dict) -> DocNode | None:
     pstyle = para.get("paragraphStyle", {})
     named_style = pstyle.get("namedStyleType", "NORMAL_TEXT")
     runs = _paragraph_runs(para, document)
-    blockquote_depth = _infer_blockquote_depth(pstyle)
-
     bullet = para.get("bullet")
+    blockquote_depth = _infer_blockquote_depth(
+        pstyle, _list_level_indent_start(bullet, document) if bullet else 0
+    )
+
     if bullet:
         checked = None
         if runs and isinstance(runs[0], Run):
@@ -102,18 +104,39 @@ def _bullet_is_ordered(bullet: dict, document: dict) -> bool:
     return "glyphType" in levels[level]
 
 
-def _infer_blockquote_depth(pstyle: dict) -> int:
+def _list_level_indent_start(bullet: dict, document: dict) -> float:
+    """indentStart, in points, that a list item's own list level gives it, before any
+    blockquote indent emitter.py adds on top (#1056). Read from the doc's `lists`
+    map, falling back to the presets emitter.py writes."""
+    level = bullet.get("nestingLevel", 0)
+    levels = (
+        document.get("lists", {})
+        .get(bullet.get("listId"), {})
+        .get("listProperties", {})
+        .get("nestingLevels", [])
+    )
+    if level < len(levels) and "indentStart" in levels[level]:
+        return levels[level]["indentStart"].get("magnitude", 0)
+    return list_level_indent_start(level)
+
+
+def _infer_blockquote_depth(pstyle: dict, base_indent: float = 0) -> int:
     """Best-effort inverse of emitter.py's _blockquote_style_request: a
     paragraph carrying both our own borderLeft styling and a nonzero
     indentStart is treated as a blockquote at the depth that indent implies.
     indentStart alone (no borderLeft) is not enough — plenty of ordinary
-    paragraphs use indentation for reasons unrelated to a quote."""
+    paragraphs use indentation for reasons unrelated to a quote.
+
+    base_indent is the indentStart the paragraph would have without the quote:
+    a list item's own level indent, 0 otherwise. A bordered list item at or
+    below it (written before #1056, when the bullets call overwrote the quote
+    indent) still reads as depth 1."""
     if not pstyle.get("borderLeft"):
         return 0
     indent = pstyle.get("indentStart", {}).get("magnitude", 0)
     if indent <= 0:
         return 0
-    return max(1, round(indent / _BLOCKQUOTE_INDENT_PT_PER_LEVEL))
+    return max(1, round((indent - base_indent) / _BLOCKQUOTE_INDENT_PT_PER_LEVEL))
 
 
 def _paragraph_runs(para: dict, document: dict) -> list[Run | Image]:
