@@ -4389,6 +4389,8 @@ Run 2 (ash).
 **Result (2026-10-17) ✅ PASS — v0.9.2 release pass**
 Run 2 (ash).
 
+
+**Result (2026-10-18) ✅ PASS — Sky, PR #1088 round 1 (`76b82a9`), regression.** Scratch doc; `{P}` was 1, link on index 2. Export was ```` ```\na\nb\n```\n\n ````: one fence, no `<br>`, no backtick span. Trashed afterwards.
 ---
 
 ## Orphan fileId on inline-image sharing failure (#649)
@@ -4496,6 +4498,8 @@ Run 2 (ash).
 **Result (2026-10-17) ✅ PASS — v0.9.2 release pass**
 Run 2 (ash).
 
+
+**Result (2026-10-18) ✅ PASS — Sky, PR #1088 round 1 (`76b82a9`), regression.** PR #1088 makes `_text_run_to_run` decode every `"\v"`, not just Courier New runs. One scratch doc held all three blocks (the `<ul>` block, the `def foo()` block, the single-line block): `get_doc_structure` showed one paragraph per block with real `\n` and no `\v`, and `get_doc_as_markdown` returned exactly three fences with indentation intact. Trashed afterwards.
 ---
 
 ### TC-DOC192: `handle_data`'s implicit top-level paragraph resets all block-open state on open (#417) (unit test)
@@ -5357,7 +5361,9 @@ Step 1: no `error`, no `backupId`. Step 2: all four tables with their text. Play
 
 **Checks**
 - Step 6 prints `False`: no raw vertical tab anywhere in the export
-- Step 5's HTML has `<p><strong>first</strong><br /># not a heading<br /><a href="https://example.com">linked</a><br />tail: anchor one</p>`: one paragraph, no `<h1>`, and the `<br />` on each side of the link sits outside the `<a>`
-- Step 5's HTML has `<h2>Heading line<br />subtitle: anchor two</h2>`
+- Step 5's HTML has `<p><strong>first</strong><br># not a heading<br><a href="https://example.com">linked</a><br>tail: anchor one</p>`: one paragraph, no `<h1>`, and the `<br>` on each side of the link sits outside the `<a>`. markdown-it passes inline raw HTML through as written, so it prints `<br>`, not `<br />`
+- Step 5's HTML has `<h2>Heading line<br>subtitle: anchor two</h2>`
 
 **Cleanup:** write fixture content back, `rm /tmp/tc-doc228.md`
+
+**Result (2026-10-18) ✅ PASS — Sky, PR #1088 round 1 (`76b82a9`).** Ran on a scratch doc (`create_doc` with the Setup content, trashed afterwards) instead of the shared fixture. `{N}` was 47. The export was `**first**<br># not a heading<br>[linked](https://example.com)<br>tail: anchor one` / `## Heading line<br>subtitle: anchor two`; step 5 rendered `<p><strong>first</strong><br># not a heading<br><a href="https://example.com">linked</a><br>tail: anchor one</p>` and `<h2>Heading line<br>subtitle: anchor two</h2>`; step 6 printed `False`. The checks as first written expected `<br />`, which markdown-it never prints for inline raw HTML, so they were corrected to `<br>` in this round; the behavior they check was right.
