@@ -103,15 +103,23 @@ with only the border to tell them apart. (This section used to say the two inden
 apply"; live reads show they didn't. The deeper indent it described came from list
 nesting alone.)
 
-So a `BulletItem`'s blockquote request is emitted inside its run's own bullet requests,
-right after the `createParagraphBullets` call (after the anchor delete, for an isolated
-run), not in the per-node pass. Its range is the post-bullets one: the item has lost its
-own leading tabs and those of every earlier item in the same run. Positions before the
-run haven't moved, since runs are applied latest-first. Its indents are the list level's
-own plus the quote's: `indentStart = 36 + 36n + 36d` and `indentFirstLine = 18 + 36n +
-36d` for nesting level `n` and quote depth `d`, keeping the glyph's hanging indent. The
-level geometry (18/36 at level 0, +36 per level) is the same for both presets the emitter
-uses, `BULLET_DISC_CIRCLE_SQUARE` and `NUMBERED_DECIMAL_ALPHA_ROMAN`, confirmed live.
+So a `BulletItem`'s blockquote request is emitted after the whole bullet pass, not in
+the per-node pass, and before the combined table/image insert pass. By then every
+synthetic depth-tab in the doc has been consumed, so its range maps through
+`_after_bullet_pass` exactly like the table and image positions do: the start moves back
+by the tabs ahead of the item, the end also by the item's own. Paragraph styling doesn't
+shift anything, so the inserts that follow are unaffected. (PR #1089 round 1 first put
+each request inside its own run's bullet requests, with a third hand-built copy of the
+tab-shift arithmetic; QA asked for one mapping, and the whole-pass placement allows it.)
+
+Its indents are the list level's own plus the quote's: `indentStart = 36 + 36n + 36d` and
+`indentFirstLine = 18 + 36n + 36d` for nesting level `n` and quote depth `d`, keeping the
+glyph's hanging indent (`emitter.list_level_indents`). The level geometry (18/36 at level
+0, +36 per level) is the same for both presets the emitter uses,
+`BULLET_DISC_CIRCLE_SQUARE` and `NUMBERED_DECIMAL_ALPHA_ROMAN`, confirmed live. Docs caps
+`nestingLevel` at 8: an item with more leading tabs lands at level 8, so `n` is capped at
+8 too. Uncapped, items nested 9 and 10 deep got indents for levels that don't exist and
+read back as quoted two and three times (PR #1089 QA round 1, live).
 
 `doc_to_ast.py`'s `_infer_blockquote_depth` subtracts the list level's own `indentStart`
 (read from the doc's `lists` map, falling back to the preset value) before dividing by

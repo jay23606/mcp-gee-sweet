@@ -45,9 +45,20 @@ class _SegmentMeta:
     doc_start: int
     doc_end: int
     skip_len: int
-    tabs_through: int
+    own_tabs: int  # this node's own synthetic depth-tabs (0 unless a BulletItem)
+    tabs_through: int  # synthetic depth-tabs up to and including this node's own
     runs: list[Run | Image]
     order: int  # index in the top-level node list, as _PendingTable.order
+
+
+def _after_bullet_pass(position: int, tabs_before: int) -> int:
+    """Map a doc index in the freshly inserted text to where it sits once the whole
+    bullet pass has run. Every createParagraphBullets call removes its paragraphs'
+    synthetic depth-tabs, so the index moves back by `tabs_before`: the number of
+    those tabs that sat ahead of it. The one place this mapping lives, for every
+    request ordered after the bullet pass (table/image inserts, quoted-bullet
+    styling)."""
+    return position - tabs_before
 
 
 def _strip_bullet_leading_tabs(runs: list[Run | Image]) -> list[Run | Image]:
@@ -287,6 +298,7 @@ def ast_to_requests(
                     doc_start=doc_start,
                     doc_end=doc_end,
                     skip_len=utf16_len(tabs) + utf16_len(prefix),
+                    own_tabs=utf16_len(tabs),
                     tabs_through=cumulative_tabs,
                     runs=offset_runs,
                     order=order,
@@ -349,7 +361,7 @@ def ast_to_requests(
             # regardless of node type (Heading/Paragraph/NamedBlock/BulletItem can all be
             # blockquote content) since Google Docs has no native blockquote paragraph
             # style to set instead — see docs/design/blockquote-representation.md.
-            # A BulletItem's is deferred to the bullet grouping pass below:
+            # A BulletItem's waits until after the bullet pass below:
             # createParagraphBullets overwrites both paragraph indents with the list
             # preset's own, so a quote indent set here was lost (#1056).
             if node.blockquote_depth > 0 and not isinstance(node, BulletItem):
@@ -369,7 +381,7 @@ def ast_to_requests(
                 if isinstance(item, Image):
                     uri = image_uris.get(id(item))
                     if uri is not None:
-                        image_position = doc_start + offset - seg.tabs_through
+                        image_position = _after_bullet_pass(doc_start + offset, seg.tabs_through)
                         image_requests = _image_insert_requests(item, uri, image_position)
                         if image_links is not None and len(image_requests) == 2:
                             image_links[id(image_requests[0])] = image_requests[1]
@@ -452,24 +464,6 @@ def ast_to_requests(
                 # clamping a deeply-nested fragment (whose ancestors were dropped for
                 # having no text of their own) to look one level deep.
                 run_requests = isolated_bullet_run_wrap_requests(run_start, run_end, preset)
-            # Blockquote styling for the run's quoted items (#1056) goes after its
-            # bullets call, which would otherwise overwrite the indents. By then each
-            # item has lost its own leading tabs and every earlier item's in this run;
-            # positions before run_start haven't moved (later runs only shift what
-            # follows them, and an isolated run's anchor insert/delete nets to zero).
-            run_tabs_before = segment_meta[i].tabs_through - node.depth
-            for seg in segment_meta[i:j]:
-                if seg.node.blockquote_depth > 0:
-                    shift = seg.tabs_through - seg.node.depth - run_tabs_before
-                    rng = {
-                        "startIndex": seg.doc_start - shift,
-                        "endIndex": seg.doc_end - shift - seg.node.depth,
-                    }
-                    run_requests.append(
-                        _blockquote_style_request(
-                            rng, seg.node.blockquote_depth, list_level=seg.node.depth
-                        )
-                    )
             bullet_run_requests.append((run_start, run_requests))
             i = j
 
@@ -481,6 +475,24 @@ def ast_to_requests(
         for _, grouped in sorted(bullet_run_requests, key=lambda item: item[0], reverse=True):
             requests.extend(grouped)
 
+        # Blockquote styling for quoted list items (#1056) runs after the whole bullet
+        # pass: createParagraphBullets overwrites both paragraph indents. Every tab has
+        # been consumed by then, so ranges map through _after_bullet_pass like the
+        # table/image inserts below; paragraph styling shifts nothing for them.
+        for seg in segment_meta:
+            if isinstance(seg.node, BulletItem) and seg.node.blockquote_depth > 0:
+                rng = {
+                    "startIndex": _after_bullet_pass(
+                        seg.doc_start, seg.tabs_through - seg.own_tabs
+                    ),
+                    "endIndex": _after_bullet_pass(seg.doc_end, seg.tabs_through),
+                }
+                requests.append(
+                    _blockquote_style_request(
+                        rng, seg.node.blockquote_depth, list_level=seg.node.depth
+                    )
+                )
+
     # Queue each table's insertTable request into the same positional_inserts pass
     # images use above. Position is adjusted for any nested-bullet leading tabs already
     # consumed ahead of it (those requests precede this combined pass in the array, so by
@@ -489,7 +501,7 @@ def ast_to_requests(
     for pending in pending_tables:
         num_rows = len(pending.node.rows)
         num_cols = max((sum(c.colspan for c in row.cells) for row in pending.node.rows), default=0)
-        position = pending.position - pending.tab_offset
+        position = _after_bullet_pass(pending.position, pending.tab_offset)
         positional_inserts.append(
             (
                 (position, pending.order, 0),
@@ -539,16 +551,19 @@ _BLOCKQUOTE_BORDER = {
 
 # Paragraph indents createParagraphBullets gives a list item at nesting level n, for
 # both presets ast_to_requests uses (confirmed live, #1056): first line (glyph) at
-# 18 + 36n pt, wrapped text at 36 + 36n pt.
+# 18 + 36n pt, wrapped text at 36 + 36n pt. Docs caps nestingLevel at 8: an item
+# with more leading tabs lands at level 8 (confirmed live, PR #1089 QA round 1).
 _LIST_INDENT_PT_PER_LEVEL = 36
 _LIST_INDENT_START_PT = 36
 _LIST_INDENT_FIRST_LINE_PT = 18
+_MAX_LIST_NESTING_LEVEL = 8
 
 
-def list_level_indent_start(level: int) -> int:
-    """indentStart, in points, of a list item at nesting level `level` in the presets
-    ast_to_requests uses."""
-    return _LIST_INDENT_START_PT + _LIST_INDENT_PT_PER_LEVEL * level
+def list_level_indents(level: int) -> tuple[int, int]:
+    """(indentFirstLine, indentStart), in points, of a list item at nesting level
+    `level` in the presets ast_to_requests uses, with `level` capped as Docs caps it."""
+    level_indent = _LIST_INDENT_PT_PER_LEVEL * min(level, _MAX_LIST_NESTING_LEVEL)
+    return _LIST_INDENT_FIRST_LINE_PT + level_indent, _LIST_INDENT_START_PT + level_indent
 
 
 def _blockquote_style_request(rng: dict, depth: int, list_level: int | None = None) -> dict:
@@ -561,13 +576,9 @@ def _blockquote_style_request(rng: dict, depth: int, list_level: int | None = No
     item (`list_level` given) keeps its glyph's hanging indent, shifted by the quote
     indent; the request must run after the item's createParagraphBullets."""
     quote_indent = _BLOCKQUOTE_INDENT_PT_PER_LEVEL * depth
-    if list_level is None:
-        start = first_line = quote_indent
-    else:
-        start = list_level_indent_start(list_level) + quote_indent
-        first_line = (
-            _LIST_INDENT_FIRST_LINE_PT + _LIST_INDENT_PT_PER_LEVEL * list_level + quote_indent
-        )
+    first_line, start = list_level_indents(list_level) if list_level is not None else (0, 0)
+    first_line += quote_indent
+    start += quote_indent
     return {
         "updateParagraphStyle": {
             "range": rng,

@@ -25,7 +25,7 @@ from .ast import (
     Run,
     Table,
 )
-from .emitter import _BLOCKQUOTE_INDENT_PT_PER_LEVEL, list_level_indent_start
+from .emitter import _BLOCKQUOTE_INDENT_PT_PER_LEVEL, list_level_indents
 from .indices import decode_code_run_text
 
 _HEADING_LEVELS = {f"HEADING_{i}": i for i in range(1, 7)}
@@ -88,10 +88,9 @@ def _paragraph_to_node(para: dict, document: dict) -> DocNode | None:
     return Paragraph(runs=runs, blockquote_depth=blockquote_depth)
 
 
-def _bullet_is_ordered(bullet: dict, document: dict) -> bool:
-    """Mirrors style.py's create_paragraph_bullets `infer_preset` — a list's
-    nesting-level glyph info is the only signal for ordered vs. unordered,
-    since `bullet` itself carries no preset field of its own."""
+def _nesting_level(bullet: dict, document: dict) -> dict | None:
+    """The doc's `lists` entry for this list item's own nesting level, or None if
+    the doc doesn't define it."""
     levels = (
         document.get("lists", {})
         .get(bullet.get("listId"), {})
@@ -99,25 +98,25 @@ def _bullet_is_ordered(bullet: dict, document: dict) -> bool:
         .get("nestingLevels", [])
     )
     level = bullet.get("nestingLevel", 0)
-    if level >= len(levels):
-        return False
-    return "glyphType" in levels[level]
+    return levels[level] if level < len(levels) else None
+
+
+def _bullet_is_ordered(bullet: dict, document: dict) -> bool:
+    """Mirrors style.py's create_paragraph_bullets `infer_preset` — a list's
+    nesting-level glyph info is the only signal for ordered vs. unordered,
+    since `bullet` itself carries no preset field of its own."""
+    level = _nesting_level(bullet, document)
+    return level is not None and "glyphType" in level
 
 
 def _list_level_indent_start(bullet: dict, document: dict) -> float:
     """indentStart, in points, that a list item's own list level gives it, before any
     blockquote indent emitter.py adds on top (#1056). Read from the doc's `lists`
     map, falling back to the presets emitter.py writes."""
-    level = bullet.get("nestingLevel", 0)
-    levels = (
-        document.get("lists", {})
-        .get(bullet.get("listId"), {})
-        .get("listProperties", {})
-        .get("nestingLevels", [])
-    )
-    if level < len(levels) and "indentStart" in levels[level]:
-        return levels[level]["indentStart"].get("magnitude", 0)
-    return list_level_indent_start(level)
+    level = _nesting_level(bullet, document)
+    if level is not None and "indentStart" in level:
+        return level["indentStart"].get("magnitude", 0)
+    return list_level_indents(bullet.get("nestingLevel", 0))[1]
 
 
 def _infer_blockquote_depth(pstyle: dict, base_indent: float = 0) -> int:

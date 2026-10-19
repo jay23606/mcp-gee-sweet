@@ -681,28 +681,38 @@ class TestBlockquoteEmitter:
         requests, _ = _html_to_doc_requests(html)
         assert len(self._blockquote_style_requests(requests)) == 1
 
-    def _bullet_quote_requests(self, html):
-        """Each quoted bullet's style request, checked to come right after its own run's
-        createParagraphBullets call: the bullets call overwrites both indents (#1056)."""
-        requests, _ = _html_to_doc_requests(html)
+    @staticmethod
+    def _is_bq(r):
+        return (
+            "updateParagraphStyle" in r
+            and "borderLeft" in (r["updateParagraphStyle"]["paragraphStyle"])
+        )
 
-        def is_bq(r):
-            return (
-                "updateParagraphStyle" in r
-                and "borderLeft" in (r["updateParagraphStyle"]["paragraphStyle"])
-            )
-
-        bq = [(i, r["updateParagraphStyle"]) for i, r in enumerate(requests) if is_bq(r)]
+    def _bullet_quote_requests(self, requests):
+        """Each quoted bullet's style request, checked to come after the whole bullet
+        pass (createParagraphBullets overwrites both indents, #1056) and before any
+        table/image insert, whose positions the ranges are not adjusted for."""
+        bullet_pass = [
+            i
+            for i, r in enumerate(requests)
+            if "createParagraphBullets" in r or "deleteContentRange" in r
+        ]
+        inserts = [
+            i for i, r in enumerate(requests) if "insertTable" in r or "insertInlineImage" in r
+        ]
+        bq = [(i, r["updateParagraphStyle"]) for i, r in enumerate(requests) if self._is_bq(r)]
         for i, _ in bq:
-            k = i - 1
-            while k >= 0 and is_bq(requests[k]):
-                k -= 1
-            assert k >= 0 and "createParagraphBullets" in requests[k]
+            assert all(i > b for b in bullet_pass)
+            assert all(i < k for k in inserts)
         return [r for _, r in bq]
+
+    def _html_bullet_quote_requests(self, html):
+        requests, _ = _html_to_doc_requests(html)
+        return self._bullet_quote_requests(requests)
 
     def test_quoted_bullet_indent_adds_to_list_level_indent(self):
         """Level-0 list item: the preset's 36/18 plus the 36pt quote indent."""
-        (req,) = self._bullet_quote_requests("<blockquote><ul><li>a</li></ul></blockquote>")
+        (req,) = self._html_bullet_quote_requests("<blockquote><ul><li>a</li></ul></blockquote>")
         style = req["paragraphStyle"]
         assert style["indentStart"]["magnitude"] == 72
         assert style["indentFirstLine"]["magnitude"] == 54
@@ -710,12 +720,12 @@ class TestBlockquoteEmitter:
 
     def test_quoted_nested_bullets_ranges_follow_tab_consumption(self):
         """Ranges are post-bullets: each item has lost its own leading tabs and every
-        earlier item's in the run."""
+        earlier item's."""
         html = (
             "<blockquote><ul><li>a<ul><li>bb<ul><li>ccc</li></ul></li></ul></li>"
             "<li>d</li></ul></blockquote>"
         )
-        reqs = self._bullet_quote_requests(html)
+        reqs = self._html_bullet_quote_requests(html)
         # Final text: "a\n" [1,3), "bb\n" [3,6), "ccc\n" [6,10), "d\n" [10,12).
         assert [r["range"] for r in reqs] == [
             {"startIndex": 1, "endIndex": 3},
@@ -732,16 +742,27 @@ class TestBlockquoteEmitter:
         ]
 
     def test_quoted_bullet_after_earlier_nested_run(self):
-        """Tabs consumed by an earlier run (applied later, latest-first) don't shift a
-        later run's ranges at the time its own requests run."""
+        """An earlier run's consumed tab shifts a later quoted item's range too."""
         html = (
             "<ul><li>x<ul><li>y</li></ul></li></ul><p>mid</p>"
             "<blockquote><ol><li>q</li></ol></blockquote>"
         )
-        (req,) = self._bullet_quote_requests(html)
-        # Pre-bullets text: "x\n\ty\nmid\nq\n"; "q\n" sits at [10,12) when its own
-        # run's requests run, since the earlier run's tab hasn't been consumed yet.
-        assert req["range"] == {"startIndex": 10, "endIndex": 12}
+        (req,) = self._html_bullet_quote_requests(html)
+        # Pre-bullets text: "x\n\ty\nmid\nq\n", "q\n" at [10,12); the "\t" goes.
+        assert req["range"] == {"startIndex": 9, "endIndex": 11}
+
+    def test_quoted_bullet_styled_before_table_insert(self):
+        """A table after a quoted list: the quote request uses post-bullets text
+        positions, so it must run before the insertTable that shifts them again."""
+        html = (
+            "<blockquote><ul><li>a<ul><li>b</li></ul></li></ul></blockquote>"
+            "<table><tr><td>t</td></tr></table>"
+        )
+        reqs = self._html_bullet_quote_requests(html)
+        assert [r["range"] for r in reqs] == [
+            {"startIndex": 1, "endIndex": 3},
+            {"startIndex": 3, "endIndex": 5},
+        ]
 
     def test_quoted_isolated_bullet_run(self):
         """An isolated (no depth-0 item) quoted run: the anchor insert/delete nets to
@@ -751,18 +772,28 @@ class TestBlockquoteEmitter:
 
         nodes = [BulletItem(runs=[Run(text="deep")], depth=1, blockquote_depth=2)]
         requests, _ = ast_to_requests(nodes)
-        bq = [
-            r["updateParagraphStyle"]
-            for r in requests
-            if "updateParagraphStyle" in r
-            and "borderLeft" in r["updateParagraphStyle"]["paragraphStyle"]
+        (req,) = self._bullet_quote_requests(requests)
+        assert req["range"] == {"startIndex": 1, "endIndex": 6}
+        assert req["paragraphStyle"]["indentStart"]["magnitude"] == 72 + 72
+        assert req["paragraphStyle"]["indentFirstLine"]["magnitude"] == 54 + 72
+
+    def test_quoted_bullet_list_level_capped_at_8(self):
+        """Docs caps nestingLevel at 8, so an item deeper than that sits at level 8 and
+        its quote indent adds to level 8's indents, not a level that doesn't exist
+        (PR #1089 QA round 1)."""
+        from mcp_gee_sweet.tools.docs.ast import BulletItem, Run
+        from mcp_gee_sweet.tools.docs.emitter import ast_to_requests
+
+        nodes = [
+            BulletItem(runs=[Run(text=f"l{d}")], depth=d, blockquote_depth=1) for d in range(11)
         ]
-        assert requests.index({"updateParagraphStyle": bq[0]}) > max(
-            i for i, r in enumerate(requests) if "deleteContentRange" in r
-        )
-        assert bq[0]["range"] == {"startIndex": 1, "endIndex": 6}
-        assert bq[0]["paragraphStyle"]["indentStart"]["magnitude"] == 72 + 72
-        assert bq[0]["paragraphStyle"]["indentFirstLine"]["magnitude"] == 54 + 72
+        requests, _ = ast_to_requests(nodes)
+        reqs = self._bullet_quote_requests(requests)
+        starts = [r["paragraphStyle"]["indentStart"]["magnitude"] for r in reqs]
+        first_lines = [r["paragraphStyle"]["indentFirstLine"]["magnitude"] for r in reqs]
+        assert starts[8:] == [36 + 36 * 8 + 36] * 3
+        assert first_lines[8:] == [18 + 36 * 8 + 36] * 3
+        assert starts[7] == 36 + 36 * 7 + 36
 
 
 class TestColspanNumCols:
